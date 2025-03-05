@@ -38,9 +38,23 @@ public class ArticleService {
     @Transactional
     public Page<ArticleListDTO> getAll(Integer page, Integer size, String sort, String order,
                                        String category, String status, String searchKeyword) {
-        // 验证排序字段和排序方向
+        // 参数校验
+        if (page == null || page < 1) {
+            throw new IllegalArgumentException("页码必须是正整数");
+        }
+        if (size == null || size < 1) {
+            throw new IllegalArgumentException("每页数量必须是正整数");
+        }
+        if (sort == null || sort.isEmpty()) {
+            sort = "id"; // 默认排序字段
+        }
+        if (order == null || (!order.equalsIgnoreCase("asc") && !order.equalsIgnoreCase("desc"))) {
+            order = "asc"; // 默认升序
+        }
+
+        // 防止SQL注入，映射排序字段
         String dbSortField = mapSortField(sort);
-        order = Arrays.asList("asc", "desc").contains(order.toLowerCase()) ? order : "asc";
+        order = order.toLowerCase();
 
         // 处理搜索关键字
         List<String> keywords = processSearchKeyword(searchKeyword);
