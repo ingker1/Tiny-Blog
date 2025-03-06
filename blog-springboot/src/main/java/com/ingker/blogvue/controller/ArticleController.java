@@ -121,7 +121,7 @@ public class ArticleController {
     @PutMapping("/articles/likes/{id}")
     public ResponseEntity<Object> addLikes(@PathVariable("id") Integer id, @RequestBody Integer likes) {
         try {
-            articleService.increaseLikes(likes + 1, id);
+            articleService.increaseField("likes_count", likes + 1, id);
             return ResponseEntity.ok().body(null);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -132,7 +132,7 @@ public class ArticleController {
     @PutMapping("/articles/views/{id}")
     public ResponseEntity<Object> addViews(@PathVariable("id") Integer id, @RequestBody Integer views) {
         try {
-            articleService.increaseViews(views + 1, id);
+            articleService.increaseField("views_count", views + 1, id);
             return ResponseEntity.ok().body(null);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

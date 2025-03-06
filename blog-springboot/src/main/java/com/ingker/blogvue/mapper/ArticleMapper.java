@@ -89,9 +89,12 @@ public interface ArticleMapper {
             "post_status = #{postStatus}, likes_count = #{likesCount}, views_count = #{viewsCount} WHERE article_id = #{articleId}")
     void update(Article article);
 
-    @Update("UPDATE article SET likes_count = #{number} WHERE article_id = #{id}")
+/*    @Update("UPDATE article SET likes_count = #{number} WHERE article_id = #{id}")
     void increaseLikes(Integer number, Integer id);
 
     @Update("UPDATE article SET views_count = #{number} WHERE article_id = #{id}")
-    void increaseViews(Integer number, Integer id);
+    void increaseViews(Integer number, Integer id);*/
+
+    @Update("UPDATE article SET ${field} = #{number} WHERE article_id = #{id}")
+    void increaseField(String field, Integer number, Integer id);
 }

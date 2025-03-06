@@ -38,13 +38,9 @@ public class ArticleService {
     @Transactional
     public Page<ArticleListDTO> getAll(Integer page, Integer size, String sort, String order,
                                        String category, String status, String searchKeyword) {
-        // 参数校验
-        if (page == null || page < 1) {
-            throw new IllegalArgumentException("页码必须是正整数");
-        }
-        if (size == null || size < 1) {
-            throw new IllegalArgumentException("每页数量必须是正整数");
-        }
+        validatePositiveInteger(page, "页码");
+        validatePositiveInteger(size, "每页数量");
+
         if (sort == null || sort.isEmpty()) {
             sort = "id"; // 默认排序字段
         }
@@ -52,20 +48,13 @@ public class ArticleService {
             order = "asc"; // 默认升序
         }
 
-        // 防止SQL注入，映射排序字段
         String dbSortField = mapSortField(sort);
         order = order.toLowerCase();
 
-        // 处理搜索关键字
         List<String> keywords = processSearchKeyword(searchKeyword);
 
-        // 计算分页偏移量
         int offset = size * (page - 1);
-
-        // 获取总记录数
         int total = articleMapper.countBySearchAndFilter(status, category, keywords);
-
-        // 查询文章
         List<Article> articles = articleMapper.searchAndFilter(status, category, keywords, dbSortField, order, size, offset);
 
         if (articles.isEmpty()) {
@@ -80,9 +69,6 @@ public class ArticleService {
 
         // 组装 DTO
         List<ArticleListDTO> articleListDTOs = buildArticleListDTOs(articles, categoryMap, tagMap, commentCountMap);
-
-        System.out.printf("分页查询文章，分类：%s，发布状态：%s，搜索关键词：%s，页数：%d，每页个数：%d，总记录数：%d，排序：%s，顺序：%s%n",
-                category, status, searchKeyword, page, size, total, sort, order);
 
         return new Page<>(articleListDTOs, total, page, size);
     }
@@ -101,14 +87,18 @@ public class ArticleService {
         return fieldMapping.getOrDefault(sortField, "article_id");
     }
 
-    // 处理搜索关键词
+    /**
+     * 处理搜索关键词
+     */
     private List<String> processSearchKeyword(String searchKeyword) {
         return Arrays.stream(searchKeyword.trim().split("\\s+"))
                 .filter(s -> !s.isEmpty())
                 .toList();
     }
 
-    // 获取文章评论数映射
+    /**
+     * 获取文章评论数映射
+     */
     Map<Integer, Integer> getArticleCommentCountMap(List<Integer> articleIds){
         return commentMapper.countByArticle(articleIds).stream()
                 .collect(Collectors.toMap(ArticleCommentCount::getArticleId, ArticleCommentCount::getCount,
@@ -116,20 +106,27 @@ public class ArticleService {
                 ));
     }
 
+    /**
+     * 处理搜索关键词
+     */
     // 获取文章分类映射
     private Map<Integer, Archive> getArticleCategoryMap(List<Integer> articleIds) {
         return archiveMapper.getByArticleIds(articleIds, "category").stream()
                 .collect(Collectors.toMap(ArticleArchive::getArticleId, ArticleArchive::getArchive));
     }
 
-    // 获取文章标签映射
+    /**
+     * 获取文章标签映射
+     */
     private Map<Integer, List<Archive>> getArticleTagMap(List<Integer> articleIds) {
         return archiveMapper.getByArticleIds(articleIds, "post_tag").stream()
                 .collect(Collectors.groupingBy(ArticleArchive::getArticleId,
                         Collectors.mapping(ArticleArchive::getArchive, Collectors.toList())));
     }
 
-    // 组装 ArticleListDTO
+    /**
+     * 组装 ArticleListDTO
+     */
     private List<ArticleListDTO> buildArticleListDTOs(List<Article> articles, Map<Integer, Archive> categoryMap,
                                                       Map<Integer, List<Archive>> tagMap, Map<Integer, Integer> commentCountMap) {
         return articles.stream()
@@ -147,93 +144,112 @@ public class ArticleService {
 
     @Transactional
     public ArticleDTO get(Integer id) {
-        ArticleDTO articleDTO = new ArticleDTO();
+        Article article = getExistingArticle(id);
 
-        Article article = articleMapper.getOne(id);
+        ArticleDTO articleDTO = new ArticleDTO();
         articleDTO.setArticle(article);
         List<Archive> category = archiveMapper.getByArticleId(id, "category");
         articleDTO.setCategory(category.isEmpty() ? null : category.get(0));
         articleDTO.setTags(new ArrayList<>());
         articleDTO.getTags().addAll(archiveMapper.getByArticleId(id, "post_tag"));
 
-        System.out.println("查询文章，ID: " + id);
         return articleDTO;
     }
-    
+
     @Transactional
     public void add(ArticleDTO articleDTO) {
-        try {
-            Article article = articleDTO.getArticle();
-            articleMapper.add(article);
+        validateNonEmptyArticleDTO(articleDTO);
+        validateNonEmptyString(articleDTO.getArticle().getArticleTitle(), "文章标题");
+        validateNonEmptyString(articleDTO.getArticle().getArticleContent(), "文章内容");
 
-            archiveRelationshipMapper.add(articleDTO.getCategory().getArchiveId(), article.getArticleId());
-            System.out.println("添加归档记录: " + articleDTO.getCategory());
-
-            for (Archive tag:articleDTO.getTags()) {
-                archiveRelationshipMapper.add(tag.getArchiveId(), article.getArticleId());
-                System.out.println("添加归档记录: " + tag);
-            }
-
-            System.out.println("添加文章成功: " + article);
-            System.out.println("分类: " + articleDTO.getCategory());
-            System.out.println("标签: " + articleDTO.getTags());
-        } catch (Exception e) {
-            System.out.println("添加文章失败: " + e.getMessage());
-            throw new RuntimeException(e); // 重新抛出
-        }
+        articleMapper.add(articleDTO.getArticle());
+        updateArticleCategoriesAndTags(articleDTO);
     }
-    
+
     @Transactional
     public void delete(Integer id) {
-        try {
-            articleMapper.delete(id);
-            archiveRelationshipMapper.deleteByArticleId(id);
+        getExistingArticle(id);
 
-            System.out.println("删除文章成功, ID: " + id);
-        } catch (Exception e) {
-            System.out.println("删除文章失败: " + e.getMessage());
-            throw new RuntimeException(e); // 重新抛出
-        }
+        articleMapper.delete(id);
+        archiveRelationshipMapper.deleteByArticleId(id);
     }
-    
+
     @Transactional
     public void update(ArticleDTO articleDTO) {
-        try {
-            articleMapper.update(articleDTO.getArticle());
+        validateNonEmptyArticleDTO(articleDTO);
+        validatePositiveInteger(articleDTO.getArticle().getArticleId(), "文章ID");
+        Article article = getExistingArticle(articleDTO.getArticle().getArticleId());
 
-            archiveRelationshipMapper.deleteByArticleId(articleDTO.getArticleId());
-            archiveRelationshipMapper.add(articleDTO.getCategory().getArchiveId(), articleDTO.getArticleId());
-            System.out.println("添加归档记录: " + articleDTO.getCategory());
+        validateNonEmptyString(articleDTO.getArticle().getArticleTitle(), "文章标题");
+        validateNonEmptyString(articleDTO.getArticle().getArticleContent(), "文章内容");
 
-            for (Archive tag:articleDTO.getTags()) {
-                archiveRelationshipMapper.add(tag.getArchiveId(), articleDTO.getArticleId());
-                System.out.println("添加归档记录: " + tag);
-            }
+        articleMapper.update(article);
+        archiveRelationshipMapper.deleteByArticleId(articleDTO.getArticleId());
 
-            System.out.println("更新文章成功: " + articleDTO);
-        } catch (Exception e) {
-            System.out.println("更新文章失败: " + e.getMessage());
-            throw new RuntimeException(e); // 重新抛出
-        }
+        updateArticleCategoriesAndTags(articleDTO);
     }
 
     @Transactional
-    public void increaseLikes(Integer number, Integer id) {
-        try {
-            articleMapper.increaseLikes(number, id);
-        } catch (Exception e) {
-            System.out.println("更新文章点赞量失败: " + e.getMessage());
-            throw new RuntimeException(e); // 重新抛出
+    public void increaseField(String field, Integer number, Integer id) {
+        validatePositiveInteger(id, "文章ID");
+        validatePositiveInteger(number, field + " 增加值");
+        articleMapper.increaseField(field, number, id);
+    }
+
+    /**
+     * 校验是否为正整数
+     */
+    private void validatePositiveInteger(Integer value, String fieldName) {
+        if (value == null || value < 1) {
+            throw new IllegalArgumentException(fieldName + " 必须是正整数");
         }
     }
 
-    @Transactional
-    public void increaseViews(Integer number, Integer id) {
-        try {
-            articleMapper.increaseViews(number, id);
-        } catch (Exception e) {
-            System.out.println("更新文章浏览量失败: " + e.getMessage());
-            throw new RuntimeException(e); // 重新抛出
+    /**
+     * 校验非空字符串
+     */
+    private void validateNonEmptyString(String value, String fieldName) {
+        if (value == null || value.trim().isEmpty()) {
+            throw new IllegalArgumentException(fieldName + " 不能为空");
+        }
+    }
+
+    /**
+     * 校验ArticleDTO
+     */
+    private void validateNonEmptyArticleDTO(ArticleDTO value) {
+        if (value == null || value.getArticle() == null) {
+            throw new IllegalArgumentException("文章数据不能为空");
+        }
+    }
+
+    /**
+     * 查询文章是否存在
+     */
+    private Article getExistingArticle(Integer id) {
+        validatePositiveInteger(id, "文章ID");
+        Article article = articleMapper.getOne(id);
+        if (article == null) {
+            throw new NoSuchElementException("文章不存在");
+        }
+        return article;
+    }
+
+    /**
+     * 更新文章的分类和标签
+     */
+    private void updateArticleCategoriesAndTags(ArticleDTO articleDTO) {
+        Integer articleId = articleDTO.getArticle().getArticleId();
+        archiveRelationshipMapper.deleteByArticleId(articleId);
+
+        if (articleDTO.getCategory() != null) {
+            validatePositiveInteger(articleDTO.getCategory().getArchiveId(), "分类ID");
+            archiveRelationshipMapper.add(articleDTO.getCategory().getArchiveId(), articleId);
+        }
+
+        for (Archive tag : articleDTO.getTags()) {
+            validatePositiveInteger(tag.getArchiveId(), "标签ID");
+            archiveRelationshipMapper.add(tag.getArchiveId(), articleId);
         }
     }
 }

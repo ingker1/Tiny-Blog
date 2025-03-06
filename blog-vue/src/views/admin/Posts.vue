@@ -60,7 +60,7 @@
                             <p>摘要：{{ article.summary.substring(0, 100) }}</p>
                             <div class="quickbutton">
                                 <button @click="editArticle(article)">编辑</button>
-                                <button @click="quickEdit(article, index)">快速编辑</button>
+                                <button @click="quickEdit(index)">快速编辑</button>
                                 <button @click="viewBlog(article.articleId)">查看文章</button>
                                 <button v-if="article.status !== 'trash'" @click="recycleArticle(article)" class="delete">移到废纸篓</button>
                             </div>
