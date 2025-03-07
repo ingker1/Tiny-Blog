@@ -9,6 +9,9 @@ import org.apache.ibatis.annotations.*;
 import java.util.List;
 
 public interface ArchiveMapper {
+
+    @Select("SELECT * FROM archive WHERE archive_id = #{id}")
+    Archive getByArchiveId(Integer id);
     /**
      *
      * 根据文章id查询存档分类*/
