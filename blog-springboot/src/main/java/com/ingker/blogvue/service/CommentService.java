@@ -9,11 +9,14 @@ import com.ingker.blogvue.util.Page;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.util.*;
 
 @Service
 public class CommentService {
+    private static final Logger logger = LoggerFactory.getLogger(CommentService.class);
+
     @Autowired
     CommentMapper commentMapper;
 
@@ -22,13 +25,11 @@ public class CommentService {
 
     @Transactional
     public List<CommentDTO> listByArticle(Integer articleId) {
-        // 获取所有评论
-        List<Comment> allComments = commentMapper.getByArticleId(articleId);
+        validateId(articleId, "文章ID");
 
-        // 根据父子关系构建评论树
+        List<Comment> allComments = commentMapper.getByArticleId(articleId);
         List<CommentDTO> rootComments = buildCommentTree(allComments);
 
-        // 展开所有子评论，包括子评论的子评论
         for (CommentDTO rootComment : rootComments) {
             flattenAllChildren(rootComment);
         }
@@ -36,7 +37,9 @@ public class CommentService {
         return rootComments;
     }
 
-    // 根据父子关系构建评论树
+    /**
+     * 根据父子关系构建评论树
+     */
     private List<CommentDTO> buildCommentTree(List<Comment> allComments) {
         // 将评论转换为DTO
         Map<Integer, CommentDTO> allCommentDTOs = convertToCommentDTOMap(allComments);
@@ -61,7 +64,9 @@ public class CommentService {
     }
 
 
-    // 将评论列表转换为评论DTO的Map
+    /**
+     * 将评论列表转换为 CommentDTO Map
+     */
     private Map<Integer, CommentDTO> convertToCommentDTOMap(List<Comment> allComments) {
         Map<Integer, CommentDTO> allCommentDTOs = new HashMap<>();
 
@@ -83,8 +88,9 @@ public class CommentService {
         return allCommentDTOs;
     }
 
-
-    // 展开所有的子评论，包括子评论的后代评论
+    /**
+     * 展开所有的子评论，包括子评论的后代评论
+     */
     private void flattenAllChildren(CommentDTO parentComment) {
         // 新建一个临时列表，包含所有直接和间接的子评论
         List<CommentDTO> flattenedChildren = new ArrayList<>();
@@ -104,39 +110,40 @@ public class CommentService {
 
     @Transactional
     public Page<CommentListDTO> list(Integer page, Integer size, String sort, String order) {
-        if (!Arrays.asList("asc", "desc", "ASC", "DESC").contains(order)) {
-            order = "desc"; // 默认排序顺序
-        }
+        page = getValidPage(page);
+        size = getValidSize(size);
+        order = getValidOrder(order);
         sort = "publish_date";
-
         Integer offset = size * (page - 1); // page 从 1 开始
+
         List<CommentListDTO> comments = commentMapper.getAll(sort, order, size, offset);
         Integer total = commentMapper.count();
 
-        System.out.printf("分页查询所有评论，页数：%d，每页个数：%d，总记录数：%d，排序：发布时间，顺序：%s%n",
-                page, size, total, order);
+        logger.info("分页查询所有评论，页数：{}，每页个数：{}，总记录数：{}，排序：{}，顺序：{}", page, size, total, sort, order);
         return new Page<>(comments, total, page, size);
     }
 
     @Transactional
     public void add(Comment comment) {
+        validateComment(comment);
         try {
             commentMapper.add(comment);
-            System.out.println("添加评论成功: " + comment);
+            logger.info("添加评论成功: {}", comment);
         } catch (Exception e) {
-            System.out.println("添加评论失败: " + e.getMessage());
-            throw new RuntimeException(e); // 重新抛出
+            logger.error("添加评论失败: {}", e.getMessage());
+            throw new RuntimeException(e);
         }
     }
 
     @Transactional
     public void delete(Integer id) {
+        validateId(id, "评论ID");
         try {
             commentMapper.delete(id);
-            System.out.println("删除评论成功, ID: " + id);
+            logger.info("删除评论成功, ID: {}", id);
         } catch (Exception e) {
-            System.out.println("删除评论失败: " + e.getMessage());
-            throw new RuntimeException(e); // 重新抛出
+            logger.error("删除评论失败: {}", e.getMessage());
+            throw new RuntimeException(e);
         }
     }
 
@@ -147,6 +154,7 @@ public class CommentService {
 
     @Transactional
     public void readMark(Integer id) {
+        validateId(id, "评论ID");
         try {
             commentMapper.readMark(id);
         } catch (Exception e) {
@@ -156,6 +164,7 @@ public class CommentService {
 
     @Transactional
     public void trashMark(Integer id) {
+        validateId(id, "评论ID");
         try {
             commentMapper.trashMark(id);
         } catch (Exception e) {
@@ -165,10 +174,66 @@ public class CommentService {
 
     @Transactional
     public void recycle(Integer id) {
+        validateId(id, "评论ID");
         try {
             commentMapper.recycle(id);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+
+    /**
+     * 校验 ID 是否有效
+     */
+    private void validateId(Integer id, String fieldName) {
+        if (id == null || id < 1) {
+            throw new IllegalArgumentException(fieldName + " 无效");
+        }
+    }
+
+    /**
+     * 校验评论内容
+     */
+    private void validateComment(Comment comment) {
+        if (comment == null) {
+            throw new IllegalArgumentException("评论信息不能为空");
+        }
+
+        validateNonEmptyString(comment.getContent(), "评论内容");
+        validateNonEmptyString(comment.getAuthor(), "评论作者");
+    }
+
+    /**
+     * 校验字符串非空
+     */
+    private void validateNonEmptyString(String value, String fieldName) {
+        if (value == null || value.trim().isEmpty()) {
+            throw new IllegalArgumentException(fieldName + " 不能为空");
+        }
+    }
+
+    /**
+     * 确保页码合法
+     */
+    private int getValidPage(Integer page) {
+        return (page == null || page < 1) ? 1 : page;
+    }
+
+    /**
+     * 确保每页大小合法
+     */
+    private int getValidSize(Integer size) {
+        return (size == null || size < 1) ? 10 : size;
+    }
+
+    /**
+     * 确保排序方式合法
+     */
+    private String getValidOrder(String order) {
+        if (!Arrays.asList("asc", "desc", "ASC", "DESC").contains(order)) {
+            order = "desc"; // 默认排序顺序
+        }
+        return order;
     }
 }
