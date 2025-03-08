@@ -5,6 +5,8 @@ import com.ingker.blogvue.entity.Archive;
 import com.ingker.blogvue.mapper.ArchiveMapper;
 import com.ingker.blogvue.mapper.ArchiveRelationshipMapper;
 import com.ingker.blogvue.util.Page;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,6 +15,8 @@ import java.util.*;
 
 @Service
 public class ArchiveService {
+    private static final Logger logger = LoggerFactory.getLogger(ArchiveService.class);
+
     @Autowired
     ArchiveMapper archiveMapper;
 
@@ -59,6 +63,7 @@ public class ArchiveService {
         List<ArchiveListDTO> archiveListDTOSs = archiveMapper.getByTaxonomyWithCount(taxonomy, dbSortField, order, size, offset);
         int total = archiveMapper.countByTaxonomy(taxonomy);
 
+        logger.info("查询完成，分类方法: {}, 记录总数: {}", taxonomy, total);
         return new Page<>(archiveListDTOSs, total, page, size);
     }
 
@@ -74,6 +79,7 @@ public class ArchiveService {
         List<Archive> archives = archiveMapper.getByTaxonomy(taxonomy, dbSortField, order, size, offset);
         int total = archiveMapper.countByTaxonomy(taxonomy);
 
+        logger.info("查询完成，分类方法: {}, 记录总数: {}", taxonomy, total);
         return new Page<>(archives, total, page, size);
     }
 
@@ -81,13 +87,15 @@ public class ArchiveService {
     public void add(Archive archive) {
         validateArchive(archive);
         archiveMapper.add(archive);
+        logger.info("新增归档成功: {}", archive);
     }
 
     @Transactional
     public void delete(Integer id) {
-        validateId(id);
+        validateId(id, "归档 ID ");
         archiveMapper.delete(id);
         archiveRelationshipMapper.deleteByArchiveId(id);
+        logger.info("删除归档成功，ID: {}", id);
     }
 
     @Transactional
@@ -97,6 +105,7 @@ public class ArchiveService {
             throw new IllegalArgumentException("归档 ID 不存在，无法更新");
         }
         archiveMapper.update(archive);
+        logger.info("归档更新成功: {}", archive);
     }
 
 
@@ -105,13 +114,16 @@ public class ArchiveService {
             throw new IllegalArgumentException("归档信息不能为空");
         }
 
-        validateNonEmptyString(archive.getArchiveName(), "存档名不能为空");
+        validateNonEmptyString(archive.getArchiveName(), "归档名不能为空");
         validateNonEmptyString(archive.getTaxonomy(), "分类方法不能为空");
     }
 
-    private void validateId(Integer id) {
+    /**
+     * 校验 ID 是否有效
+     */
+    private void validateId(Integer id, String fieldName) {
         if (id == null || id < 1) {
-            throw new IllegalArgumentException("无效的 ID");
+            throw new IllegalArgumentException(fieldName + " 无效");
         }
     }
 

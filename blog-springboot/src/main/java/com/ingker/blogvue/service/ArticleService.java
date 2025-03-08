@@ -12,6 +12,8 @@ import com.ingker.blogvue.mapper.ArchiveRelationshipMapper;
 import com.ingker.blogvue.mapper.ArticleMapper;
 import com.ingker.blogvue.mapper.CommentMapper;
 import com.ingker.blogvue.util.Page;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +25,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class ArticleService {
+    private static final Logger logger = LoggerFactory.getLogger(CommentService.class);
+
     @Autowired
     ArticleMapper articleMapper;
 
@@ -70,6 +74,8 @@ public class ArticleService {
         // 组装 DTO
         List<ArticleListDTO> articleListDTOs = buildArticleListDTOs(articles, categoryMap, tagMap, commentCountMap);
 
+        logger.info("分页查询文章，分类：{}，发布状态：{}，搜索关键词：{}，页数：{}，每页个数：{}，总记录数：{}，排序：{}，顺序：{}",
+                category, status, searchKeyword, page, size, total, sort, order);
         return new Page<>(articleListDTOs, total, page, size);
     }
 
@@ -153,6 +159,7 @@ public class ArticleService {
         articleDTO.setTags(new ArrayList<>());
         articleDTO.getTags().addAll(archiveMapper.getByArticleId(id, "post_tag"));
 
+        logger.info("查询文章，ID: {}", id);
         return articleDTO;
     }
 
@@ -162,16 +169,28 @@ public class ArticleService {
         validateNonEmptyString(articleDTO.getArticle().getArticleTitle(), "文章标题");
         validateNonEmptyString(articleDTO.getArticle().getArticleContent(), "文章内容");
 
-        articleMapper.add(articleDTO.getArticle());
-        updateArticleCategoriesAndTags(articleDTO);
+        try {
+            articleMapper.add(articleDTO.getArticle());
+            updateArticleCategoriesAndTags(articleDTO);
+            logger.info("文章添加成功: ID={}", articleDTO.getArticle().getArticleId());
+        } catch (Exception e) {
+            logger.error("文章添加失败: 标题={}, 错误信息={}", articleDTO.getArticle().getArticleTitle(), e.getMessage(), e);
+            throw new RuntimeException(e);
+        }
     }
 
     @Transactional
     public void delete(Integer id) {
         getExistingArticle(id);
 
-        articleMapper.delete(id);
-        archiveRelationshipMapper.deleteByArticleId(id);
+        try {
+            articleMapper.delete(id);
+            archiveRelationshipMapper.deleteByArticleId(id);
+            logger.info("文章删除成功: ID={}", id);
+        } catch (Exception e) {
+            logger.error("文章删除失败: ID={}, 错误信息={}", id, e.getMessage(), e);
+            throw new RuntimeException(e);
+        }
     }
 
     @Transactional
@@ -183,17 +202,28 @@ public class ArticleService {
         validateNonEmptyString(articleDTO.getArticle().getArticleTitle(), "文章标题");
         validateNonEmptyString(articleDTO.getArticle().getArticleContent(), "文章内容");
 
-        articleMapper.update(article);
-        archiveRelationshipMapper.deleteByArticleId(articleDTO.getArticleId());
-
-        updateArticleCategoriesAndTags(articleDTO);
+        try {
+            articleMapper.update(article);
+            archiveRelationshipMapper.deleteByArticleId(articleDTO.getArticleId());
+            updateArticleCategoriesAndTags(articleDTO);
+            logger.info("文章更新成功: ID={}", articleDTO.getArticle().getArticleId());
+        } catch (Exception e) {
+            logger.error("文章更新失败: ID={}, 错误信息={}", articleDTO.getArticle().getArticleId(), e.getMessage(), e);
+            throw new RuntimeException(e);
+        }
     }
 
     @Transactional
     public void increaseField(String field, Integer number, Integer id) {
         validatePositiveInteger(id, "文章ID");
         validatePositiveInteger(number, field + " 增加值");
-        articleMapper.increaseField(field, number, id);
+        try {
+            articleMapper.increaseField(field, number, id);
+            logger.info("文章字段更新成功: field={}, id={}, 新增值={}", field, id, number);
+        } catch (Exception e) {
+            logger.error("文章字段更新失败: field={}, id={}, 错误信息={}", field, id, e.getMessage(), e);
+            throw new RuntimeException(e);
+        }
     }
 
     /**
