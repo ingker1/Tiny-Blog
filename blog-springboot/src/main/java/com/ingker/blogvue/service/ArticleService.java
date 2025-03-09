@@ -197,13 +197,13 @@ public class ArticleService {
     public void update(ArticleDTO articleDTO) {
         validateNonEmptyArticleDTO(articleDTO);
         validatePositiveInteger(articleDTO.getArticle().getArticleId(), "文章ID");
-        Article article = getExistingArticle(articleDTO.getArticle().getArticleId());
+        getExistingArticle(articleDTO.getArticle().getArticleId());
 
         validateNonEmptyString(articleDTO.getArticle().getArticleTitle(), "文章标题");
         validateNonEmptyString(articleDTO.getArticle().getArticleContent(), "文章内容");
 
         try {
-            articleMapper.update(article);
+            articleMapper.update(articleDTO.getArticle());
             archiveRelationshipMapper.deleteByArticleId(articleDTO.getArticleId());
             updateArticleCategoriesAndTags(articleDTO);
             logger.info("文章更新成功: ID={}", articleDTO.getArticle().getArticleId());
