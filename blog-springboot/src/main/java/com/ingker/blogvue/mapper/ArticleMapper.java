@@ -21,10 +21,11 @@ public interface ArticleMapper {
             SELECT
               at.article_id, at.article_title, LEFT(at.article_content, 500) as article_content,
               at.post_time, at.update_time, at.post_status,
-              at.likes_count, at.views_count
+              at.likes_count, at.views_count, IFNULL(COUNT(c.comment_id), 0) AS count
             FROM article at
             LEFT JOIN archive_relationship arr ON at.article_id = arr.article_id
             LEFT JOIN archive ar ON arr.archive_id = ar.archive_id
+            LEFT JOIN comment c ON at.article_id = c.article_id AND c.status != 'trash'
             <where>
               <if test="status != null and status != ''">
                   at.post_status = #{status}
@@ -77,8 +78,8 @@ public interface ArticleMapper {
     /**
      * 使用useGeneratedKeys，MyBatis 可以自动获取 INSERT 后的主键
      * */
-    @Insert("INSERT INTO article(article_title, article_content, post_time, update_time, post_status, likes_count, views_count) " +
-            "VALUES(#{articleTitle}, #{articleContent}, #{postTime}, #{updateTime}, #{postStatus}, #{likesCount}, #{viewsCount})")
+    @Insert("INSERT INTO article(article_title, article_content, post_time, update_time, post_status, likes_count, views_count, comments_count) " +
+            "VALUES(#{articleTitle}, #{articleContent}, #{postTime}, #{updateTime}, #{postStatus}, #{likesCount}, #{viewsCount}, #{commentsCount})")
     @Options(useGeneratedKeys = true, keyProperty = "articleId")
     Integer add(Article article);
 
@@ -86,14 +87,8 @@ public interface ArticleMapper {
     void delete(Integer id);
 
     @Update("UPDATE article SET article_title = #{articleTitle}, article_content = #{articleContent}, post_time = #{postTime}, update_time = #{updateTime}, " +
-            "post_status = #{postStatus}, likes_count = #{likesCount}, views_count = #{viewsCount} WHERE article_id = #{articleId}")
+            "post_status = #{postStatus}, likes_count = #{likesCount}, views_count = #{viewsCount}, comments_count = #{commentsCount} WHERE article_id = #{articleId}")
     void update(Article article);
-
-/*    @Update("UPDATE article SET likes_count = #{number} WHERE article_id = #{id}")
-    void increaseLikes(Integer number, Integer id);
-
-    @Update("UPDATE article SET views_count = #{number} WHERE article_id = #{id}")
-    void increaseViews(Integer number, Integer id);*/
 
     @Update("UPDATE article SET ${field} = #{number} WHERE article_id = #{id}")
     void increaseField(String field, Integer number, Integer id);

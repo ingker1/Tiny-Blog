@@ -53,7 +53,6 @@
             </thead>
 
             <tbody>
-                <!-- 使用一个数组来动态插入编辑行 -->
                 <template v-for="(article, index) in articles" :key="article.updateDate">
                     <tr v-if="editingArticleIndex !== index">
                         <td>{{ article.title }}
@@ -347,6 +346,7 @@
             status: article.status,
             likes: article.likes,
             views: article.views,
+            comments: article.comments,
             category: article.category,
             tags: article.tags
         })

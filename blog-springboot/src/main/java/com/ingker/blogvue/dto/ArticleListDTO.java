@@ -54,5 +54,6 @@ public class ArticleListDTO {
         this.postStatus = article.getPostStatus();
         this.likesCount = article.getLikesCount();
         this.viewsCount = article.getViewsCount();
+        this.commentsCount = article.getCommentsCount();
     }
 }

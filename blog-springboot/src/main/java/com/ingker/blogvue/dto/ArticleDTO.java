@@ -15,7 +15,7 @@ import java.util.List;
 @Getter
 @Setter
 @ToString
-@JsonPropertyOrder({"articleId", "title", "summary", "postDate", "updateDate", "status", "likes", "views", "category", "tags"})
+@JsonPropertyOrder({"articleId", "title", "summary", "postDate", "updateDate", "status", "likes", "views", "comments", "category", "tags"})
 public class ArticleDTO {
     private Integer articleId;
 
@@ -40,6 +40,9 @@ public class ArticleDTO {
     @JsonProperty("views")
     private Integer viewsCount;
 
+    @JsonProperty("comments")
+    private Integer commentsCount;
+
     private Archive category;
     private List<Archive> tags;
 
@@ -52,6 +55,7 @@ public class ArticleDTO {
         this.postStatus = article.getPostStatus();
         this.likesCount = article.getLikesCount();
         this.viewsCount = article.getViewsCount();
+        this.commentsCount = article.getCommentsCount();
     }
 
     @JsonIgnore
@@ -65,6 +69,7 @@ public class ArticleDTO {
         article.setPostStatus(this.postStatus);
         article.setLikesCount(this.likesCount);
         article.setViewsCount(this.viewsCount);
+        article.setCommentsCount(this.commentsCount);
         return article;
     }
 }

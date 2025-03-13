@@ -11,6 +11,7 @@ public class Article {
     private String postStatus;
     private Integer likesCount;
     private Integer viewsCount;
+    private Integer commentsCount;
 
     public void setViewsCount(Integer viewsCount) {
         this.viewsCount = viewsCount;
@@ -42,6 +43,10 @@ public class Article {
 
     public void setArticleTitle(String articleTitle) {
         this.articleTitle = articleTitle;
+    }
+
+    public void setCommentsCount(Integer commentsCount) {
+        this.commentsCount = commentsCount;
     }
 
     public Integer getArticleId() {
@@ -76,6 +81,10 @@ public class Article {
         return articleTitle;
     }
 
+    public Integer getCommentsCount() {
+        return commentsCount;
+    }
+
     @Override
     public String toString() {
         return "Article{" +
@@ -87,6 +96,7 @@ public class Article {
                 ", postStatus='" + postStatus + '\'' +
                 ", likesCount=" + likesCount +
                 ", viewsCount=" + viewsCount +
+                ", commentsCount=" + commentsCount +
                 '}';
     }
 }

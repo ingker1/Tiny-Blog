@@ -2,8 +2,6 @@ package com.ingker.blogvue.controller;
 
 import com.ingker.blogvue.dto.ArticleDTO;
 import com.ingker.blogvue.dto.ArticleListDTO;
-import com.ingker.blogvue.entity.Article;
-import com.ingker.blogvue.mapper.ArticleMapper;
 import com.ingker.blogvue.service.ArticleService;
 import com.ingker.blogvue.util.Page;
 import org.springframework.beans.factory.annotation.Autowired;

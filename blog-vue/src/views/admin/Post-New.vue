@@ -93,6 +93,7 @@
                 status: status.value,
                 likes: 0,
                 views: 0,
+                comments: 0,
                 category: category.value,
                 tags: tags.value
             });

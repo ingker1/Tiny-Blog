@@ -48,6 +48,7 @@ import { ref, onMounted, onUnmounted } from 'vue';
 
     const likes = ref(0);
     const views = ref(0);
+    const comments = ref(0);
 
     const saveTags = async () => {
             let temptags = tags.value;
@@ -87,6 +88,7 @@ import { ref, onMounted, onUnmounted } from 'vue';
                 status: status.value,
                 likes: likes.value,
                 views: views.value,
+                comments: comments.value,
                 category: category.value,
                 tags: tags.value
             });
@@ -153,6 +155,7 @@ import { ref, onMounted, onUnmounted } from 'vue';
             
             likes.value = response.data.likes;
             views.value = response.data.views;
+            comments.value = response.data.comments;
 
             document.title = '编辑文章 - ' + articletitle.value;
         } catch {
