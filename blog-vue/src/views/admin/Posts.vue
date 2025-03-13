@@ -153,9 +153,9 @@
         'postDate-asc': { sortField: 'postDate', label: '最早发布', sortOrder: 'asc' },
         'updateDate-desc': { sortField: 'updateDate', label: '最近修改', sortOrder: 'desc' },
         'updateDate-asc': { sortField: 'updateDate', label: '最早修改', sortOrder: 'asc' },
-        'views-asc': { sortField: 'views', label: '浏览量', sortOrder: 'asc' },
-        'likes-asc': { sortField: 'likes', label: '点赞数', sortOrder: 'asc' },
-        'comments-asc': { sortField: 'comments', label: '评论数', sortOrder: 'asc' }
+        'views-desc': { sortField: 'views', label: '浏览量', sortOrder: 'desc' },
+        'likes-desc': { sortField: 'likes', label: '点赞数', sortOrder: 'desc' },
+        'comments-desc': { sortField: 'comments', label: '评论数', sortOrder: 'desc' }
     };
     const option = ref(options['postDate-desc']);
 

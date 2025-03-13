@@ -89,6 +89,9 @@ public class ArticleService {
         fieldMapping.put("title", "article_title");
         fieldMapping.put("postDate", "post_time");
         fieldMapping.put("updateDate", "update_time");
+        fieldMapping.put("views", "views_count");
+        fieldMapping.put("likes", "likes_count");
+        fieldMapping.put("comments", "comments_count");
         // 返回数据库列名，默认为 id
         return fieldMapping.getOrDefault(sortField, "article_id");
     }

@@ -61,7 +61,7 @@
     import axios from 'axios';
 
     const comments = ref([]);
-    const sortOrder = ref('asc');
+    const sortOrder = ref('desc');
     const currentPage = ref(1);
     const totalPages = ref(0);
     const RecordPerPage = ref(15);
