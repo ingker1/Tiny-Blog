@@ -129,6 +129,8 @@ public class CommentService {
         try {
             commentMapper.add(comment);
             logger.info("添加评论成功: {}", comment);
+            articleMapper.increaseField("comments_count", comment.getArticleId());
+            logger.info("文章字段自增成功: field={}, id={}", "comments_count", comment.getArticleId());
         } catch (Exception e) {
             logger.error("添加评论失败: {}", e.getMessage());
             throw new RuntimeException(e);

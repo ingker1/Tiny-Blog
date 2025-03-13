@@ -21,7 +21,7 @@ public interface ArticleMapper {
             SELECT
               at.article_id, at.article_title, LEFT(at.article_content, 500) as article_content,
               at.post_time, at.update_time, at.post_status,
-              at.likes_count, at.views_count, IFNULL(COUNT(c.comment_id), 0) AS count
+              at.likes_count, at.views_count, IFNULL(COUNT(DISTINCT c.comment_id), 0) AS comments_count
             FROM article at
             LEFT JOIN archive_relationship arr ON at.article_id = arr.article_id
             LEFT JOIN archive ar ON arr.archive_id = ar.archive_id
@@ -90,6 +90,6 @@ public interface ArticleMapper {
             "post_status = #{postStatus}, likes_count = #{likesCount}, views_count = #{viewsCount}, comments_count = #{commentsCount} WHERE article_id = #{articleId}")
     void update(Article article);
 
-    @Update("UPDATE article SET ${field} = #{number} WHERE article_id = #{id}")
-    void increaseField(String field, Integer number, Integer id);
+    @Update("UPDATE article SET ${field} = ${field} + 1 WHERE article_id = #{id}")
+    void increaseField(String field, Integer id);
 }

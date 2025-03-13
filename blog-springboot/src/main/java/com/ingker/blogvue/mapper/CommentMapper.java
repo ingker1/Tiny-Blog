@@ -1,6 +1,6 @@
 package com.ingker.blogvue.mapper;
 
-import com.ingker.blogvue.dto.ArticleCommentCount;
+
 import com.ingker.blogvue.dto.CommentListDTO;
 import com.ingker.blogvue.entity.Comment;
 import org.apache.ibatis.annotations.*;
@@ -42,15 +42,4 @@ public interface CommentMapper {
 
     @Delete("UPDATE comment SET status = 'read' WHERE article_id = #{articleId}")
     void recycle(Integer articleId);
-
-    @Select("""
-    <script>
-            <foreach collection='articleIds' item='articleId' separator=' UNION ALL '>
-                SELECT count(*) as count, article_id
-                FROM comment
-                WHERE article_id = #{articleId}
-            </foreach>
-    </script>
-    """)
-    List<ArticleCommentCount> countByArticle(List<Integer> articleIds);
 }

@@ -2,7 +2,6 @@ package com.ingker.blogvue.service;
 
 
 import com.ingker.blogvue.dto.ArticleArchive;
-import com.ingker.blogvue.dto.ArticleCommentCount;
 import com.ingker.blogvue.dto.ArticleDTO;
 import com.ingker.blogvue.dto.ArticleListDTO;
 import com.ingker.blogvue.entity.Archive;
@@ -67,12 +66,11 @@ public class ArticleService {
 
         // 获取文章的分类和标签
         List<Integer> articleIds = articles.stream().map(Article::getArticleId).toList();
-        Map<Integer, Integer> commentCountMap = getArticleCommentCountMap(articleIds);
         Map<Integer, Archive> categoryMap = getArticleCategoryMap(articleIds);
         Map<Integer, List<Archive>> tagMap = getArticleTagMap(articleIds);
 
         // 组装 DTO
-        List<ArticleListDTO> articleListDTOs = buildArticleListDTOs(articles, categoryMap, tagMap, commentCountMap);
+        List<ArticleListDTO> articleListDTOs = buildArticleListDTOs(articles, categoryMap, tagMap);
 
         logger.info("分页查询文章，分类：{}，发布状态：{}，搜索关键词：{}，页数：{}，每页个数：{}，总记录数：{}，排序：{}，顺序：{}",
                 category, status, searchKeyword, page, size, total, sort, order);
@@ -106,16 +104,6 @@ public class ArticleService {
     }
 
     /**
-     * 获取文章评论数映射
-     */
-    Map<Integer, Integer> getArticleCommentCountMap(List<Integer> articleIds){
-        return commentMapper.countByArticle(articleIds).stream()
-                .collect(Collectors.toMap(ArticleCommentCount::getArticleId, ArticleCommentCount::getCount,
-                        Integer::sum   // 若有重复 articleId，则合并评论数
-                ));
-    }
-
-    /**
      * 处理搜索关键词
      */
     // 获取文章分类映射
@@ -137,12 +125,11 @@ public class ArticleService {
      * 组装 ArticleListDTO
      */
     private List<ArticleListDTO> buildArticleListDTOs(List<Article> articles, Map<Integer, Archive> categoryMap,
-                                                      Map<Integer, List<Archive>> tagMap, Map<Integer, Integer> commentCountMap) {
+                                                      Map<Integer, List<Archive>> tagMap) {
         return articles.stream()
                 .map(article -> {
                     ArticleListDTO dto = new ArticleListDTO();
                     dto.setArticle(article);
-                    dto.setCommentsCount(commentCountMap.getOrDefault(article.getArticleId(), 0));
                     dto.setCategory(categoryMap.getOrDefault(article.getArticleId(), null));
                     dto.setTags(tagMap.getOrDefault(article.getArticleId(), Collections.emptyList()));
                     return dto;
@@ -217,14 +204,13 @@ public class ArticleService {
     }
 
     @Transactional
-    public void increaseField(String field, Integer number, Integer id) {
+    public void increaseField(String field, Integer id) {
         validatePositiveInteger(id, "文章ID");
-        validatePositiveInteger(number, field + " 增加值");
         try {
-            articleMapper.increaseField(field, number, id);
-            logger.info("文章字段更新成功: field={}, id={}, 新增值={}", field, id, number);
+            articleMapper.increaseField(field, id);
+            logger.info("文章字段自增成功: field={}, id={}", field, id);
         } catch (Exception e) {
-            logger.error("文章字段更新失败: field={}, id={}, 错误信息={}", field, id, e.getMessage(), e);
+            logger.error("文章字段自增失败: field={}, id={}, 错误信息={}", field, id, e.getMessage(), e);
             throw new RuntimeException(e);
         }
     }
