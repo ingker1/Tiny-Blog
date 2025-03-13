@@ -14,16 +14,16 @@
 
         <label for="category">分类:</label>
         <select v-model="category" id="category" @change="applyFilters()">
-            <option :value="allCategory">全部</option>
-            <option v-for="category in categories" :key="category.archiveId" :value="category">
-            {{ category.name }}
+            <option value="">全部</option>
+            <option v-for="categoryItem in categories" :key="categoryItem.archiveId" :value="categoryItem.name">
+            {{ categoryItem.name }}
             </option>
         </select>
 
         <label for="sort">排序:</label>
-        <select v-model="option" id="option" @change="applyFilters(option)">    
-            <option v-for="option in options" :key="option.id" :value="option">
-                {{ option.label }}
+        <select v-model="option" id="option" @change="applyFilters()">    
+            <option v-for="optionItem in options" :key="optionItem.id" :value="optionItem">
+                {{ optionItem.label }}
             </option>
         </select>
         
@@ -43,11 +43,11 @@
         <table>
             <thead>
                 <tr>
-                <th style="width: 40%;" @click="reveseSortByField('title')">文章标题<span :class="getArrowClass('title')"></span></th>
+                <th style="width: 40%;">文章标题</th>
                 <th style="width: 10%;">分类</th>
                 <th style="width: 20%;">标签</th>
                 <th style="width: 5%;">状态</th>
-                <th style="width: 15%;" @click="reveseSortByField('updateDate')">更新时间<span :class="getArrowClass('updateDate')"></span></th>
+                <th style="width: 15%;">时间</th>
                 <th style="width: 10%">数据</th>
                 </tr>
             </thead>
@@ -68,13 +68,9 @@
                         <td>{{ article.category ? article.category.name : '' }}</td>
                         <td>{{ article.tags ? article.tags.map(tag => tag.name).join('、') : '' }}</td>
                         <td>{{ formatPostStatus(article.status) }}</td>
-                        <td v-if="article.status === 'publish'">
-                            已发布<br>
-                            {{ formatDate(article.postDate) }} <br>
-                        </td>
-                        <td v-if="article.status !== 'publish'">
-                            最后修改<br>
-                            {{ formatDate(article.updateDate) }} <br>
+                        <td>
+                            {{ getDisplayTime(article).label }}<br>
+                            {{ getDisplayTime(article).date }}<br>
                         </td>
                         <td>
                             <span class="meta-item">{{ article.views }} 浏览</span> <br>
@@ -141,35 +137,50 @@
     const currentPage = ref(1);         // 当前页
     const totalPages = ref(1);          // 总页数
     const status = ref('');          	// 发布状态
-    
-    const sortField = ref('postDate');  // 排序字段
-    const sortOrder = ref('desc');		// 排序顺序
     const RecordPerPage = ref(15);    	// 每页记录数
     const searchKeywords = ref('')      // 搜索关键词
     const router = useRouter(); 	    // 路由管理器
     const route = useRoute();			// 当前的路由信息
     const pageInput = ref(1);           // 用于输入跳转页码的变量
     const queryParams = ref([]);        // 创建一个查询参数对象
-
-
-    const categories = ref([]);
+    const categories = ref([]);         // 文章分类下拉框列表
     const category = ref(null);        	// 文章分类
-    const allCategory = ref({ archiveId: 0, taxonomy: "category", name: ""});
 
     const editingArticleIndex = ref(null); // 当前正在编辑的文章的索引
 
     // 定义排序选项
-    const options = [
-        { sortField: 'title', label: '标题顺序', sortOrder: 'asc' },
-        { sortField: 'postDate', label: '最近发布', sortOrder: 'desc' },
-        { sortField: 'postDate', label: '最早发布', sortOrder: 'asc' },
-        { sortField: 'updateDate', label: '最近修改', sortOrder: 'desc' },
-        { sortField: 'updateDate', label: '最早修改', sortOrder: 'asc' },
-        { sortField: 'views', label: '浏览量', sortOrder: 'asc' },
-        { sortField: 'lies', label: '点赞数', sortOrder: 'asc' },
-        { sortField: 'comments', label: '评论数', sortOrder: 'asc' },
-    ];
-    const option = ref(options[1]);
+    const options  = {
+        'postDate-desc': { sortField: 'postDate', label: '最近发布', sortOrder: 'desc' },
+        'postDate-asc': { sortField: 'postDate', label: '最早发布', sortOrder: 'asc' },
+        'updateDate-desc': { sortField: 'updateDate', label: '最近修改', sortOrder: 'desc' },
+        'updateDate-asc': { sortField: 'updateDate', label: '最早修改', sortOrder: 'asc' },
+        'views-asc': { sortField: 'views', label: '浏览量', sortOrder: 'asc' },
+        'likes-asc': { sortField: 'likes', label: '点赞数', sortOrder: 'asc' },
+        'comments-asc': { sortField: 'comments', label: '评论数', sortOrder: 'asc' }
+    };
+    const option = ref(options['postDate-desc']);
+
+    // 计算每个 article 的显示内容
+    const getDisplayTime = (article) => {
+        if (option.value.sortField === 'updateDate' || option.value.sortField === 'postDate') {
+            if (article.status === 'publish') {
+                if (option.value.sortField === 'updateDate') {
+                    return { label: '最近修改', date: formatDate(article.updateDate) };
+                } else if (option.value.sortField === 'postDate') {
+                    return { label: '已发布', date: formatDate(article.postDate) };
+                }
+            } else {
+                return { label: '最近修改', date: formatDate(article.updateDate) };
+            }
+        } else {
+            // 对于其他 sortField 的值
+            if (article.status === 'publish') {
+                return { label: '已发布', date: formatDate(article.postDate) };
+            } else {
+                return { label: '最后修改', date: formatDate(article.updateDate) };
+            }
+        }
+    };
 
     // 格式化日期
     const formatDate = (dateStr) => {
@@ -216,7 +227,11 @@
             status.value = route.query.status;
         }
         if (route.query.category) {
-            category.value.name = route.query.category;
+            category.value = route.query.category;
+        }
+        if (route.query.sort && route.query.sort !== 'postDate') {
+            let orderString = `${route.query.sort}` + '-' + `${route.query.order}`;
+            option.value = options[orderString];
         }
         // 获取文章列表
         try {
@@ -224,9 +239,9 @@
                 params: {
                     page: currentPage.value,
                     limit: RecordPerPage.value,
-                    sort: sortField.value,
-                    order: sortOrder.value,
-                    category: category.value.name,
+                    sort: option.value.sortField,
+                    order: option.value.sortOrder,
+                    category: category.value,
                     status: status.value,
                     keywords: searchKeywords.value
                 },
@@ -250,30 +265,26 @@
             }
         }).then(response => {
             categories.value = response.data.content;
-            category.value = allCategory.value;
+            category.value = '';
         }).catch(error => {
             console.error('请求分类存档列表失败:', error);
         });
     };
 
-    const applyFilters = (sortOption) => {
+    const applyFilters = () => {
         currentPage.value = 1;   
         queryParams.value = {};  // 清空查询参数，防止残存数据
 
-        // 如果指定了排序方式
-        if (sortOption) {
-            sortField.value = sortOption.sortField;
-            sortOrder.value = sortOption.sortOrder;
-        }
         // 根据条件在路由中添加相应的查询字段
         if (status.value && status.value !== '') {
             queryParams.value.status = status.value;
         }
-        if (category.value && category.value.name !== '') {
-            queryParams.value.category = category.value.name;
+        if (category.value && category.value !== '') {
+            queryParams.value.category = category.value;
         }
-        if (sortField.value && sortField.value !== 'postDate') {
-            queryParams.value.sortField = sortField.value;
+        if (option.value && option.value.sortField !== 'postDate') {
+            queryParams.value.sort = option.value.sortField;
+            queryParams.value.order = option.value.sortOrder;
         }
         if (searchKeywords.value) {
             let keywords = searchKeywords.value.split(/\s+/).filter(keyword => keyword);
@@ -292,22 +303,6 @@
             loadArticles(); // 确保路由更新后再加载文章
         }, 0);
     };
-
-
-    // 返回当前排序列的箭头类
-    const getArrowClass = (field) => {
-        if (sortField.value === field) {
-            return sortOrder.value === 'asc' ? 'arrow-up' : 'arrow-down';
-        }
-        return '';
-    };
-
-    // 更换排序字段，并以相反顺序排序
-    const reveseSortByField = (field) => {
-        sortField.value = field;
-        sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
-        applyFilters();
-    }
 
     // 分页跳转
     const changePage = (page) => {
@@ -491,14 +486,6 @@ th span {
 
 input {
 width: calc(200px);
-}
-
-.arrow-up::before {
-    content: '⯅'; /* 向上的箭头 */
-}
-
-.arrow-down::before {
-    content: '⯆'; /* 向下的箭头 */
 }
 
 .pagination {
