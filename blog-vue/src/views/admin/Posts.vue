@@ -67,7 +67,7 @@
                         </td>
                         <td>{{ article.category ? article.category.name : '' }}</td>
                         <td>{{ article.tags ? article.tags.map(tag => tag.name).join('、') : '' }}</td>
-                        <td>{{ formatPostStatus(article.status) }}</td>
+                        <td>{{ formatPostStatus(article) }}</td>
                         <td>
                             {{ getDisplayTime(article).label }}<br>
                             {{ getDisplayTime(article).date }}<br>
@@ -86,7 +86,7 @@
                             <QuickEdit
                             :categories="categories"
                             v-model:status="article.status"
-                            v-model:time="article.updateDate"
+                            v-model:time="article.postDate"
                             v-model:category="article.category"
                             v-model:tags="article.tags"
                             />
@@ -136,7 +136,7 @@
     const articles = ref([]);           // 用于存储文章列表
     const currentPage = ref(1);         // 当前页
     const totalPages = ref(1);          // 总页数
-    const status = ref('');          	// 发布状态
+    const status = ref('publish');      // 发布状态
     const RecordPerPage = ref(15);    	// 每页记录数
     const searchKeywords = ref('')      // 搜索关键词
     const router = useRouter(); 	    // 路由管理器
@@ -162,24 +162,20 @@
 
     // 计算每个 article 的显示内容
     const getDisplayTime = (article) => {
-        if (option.value.sortField === 'updateDate' || option.value.sortField === 'postDate') {
-            if (article.status === 'publish') {
-                if (option.value.sortField === 'updateDate') {
-                    return { label: '最近修改', date: formatDate(article.updateDate) };
-                } else if (option.value.sortField === 'postDate') {
-                    return { label: '已发布', date: formatDate(article.postDate) };
-                }
-            } else {
-                return { label: '最近修改', date: formatDate(article.updateDate) };
-            }
-        } else {
-            // 对于其他 sortField 的值
-            if (article.status === 'publish') {
-                return { label: '已发布', date: formatDate(article.postDate) };
-            } else {
-                return { label: '最后修改', date: formatDate(article.updateDate) };
-            }
+        const isPublish = article.status === 'publish';
+        const isScheduled = formatDate(new Date()) < article.postDate;
+
+        if (option.value.sortField === 'updateDate') {
+            return { label: '最后修改', date: formatDate(article.updateDate) };
         }
+        
+        if (isPublish) {
+            return isScheduled
+                ? { label: '定时发布', date: formatDate(article.postDate) }
+                : { label: '已发布', date: formatDate(article.postDate) };
+        } else {
+            return { label: '最后修改', date: formatDate(article.updateDate) };
+        } 
     };
 
     // 格式化日期
@@ -197,14 +193,18 @@
         return result;
     };
 
-    function formatPostStatus(Field) {
+    function formatPostStatus(article) {
         // 定义前端字段和数据库列名的映射关系
         const fieldMapping = new Map();
-        fieldMapping.set('publish', '已发布');
+        if (formatDate(new Date()) < article.postDate) {
+            fieldMapping.set('publish', '定时发布');
+        } else {
+            fieldMapping.set('publish', '已发布');
+        }
         fieldMapping.set('draft', '草稿');
         fieldMapping.set('trash', '垃圾');
         fieldMapping.set('private', '私密');
-        return fieldMapping.get(Field) || "未知";
+        return fieldMapping.get(article.status) || "未知";
     }
 
     const viewBlog = (articleId) => {
@@ -229,7 +229,7 @@
         if (route.query.category) {
             category.value = route.query.category;
         }
-        if (route.query.sort && route.query.sort !== 'postDate') {
+        if (route.query.sort) {
             let orderString = `${route.query.sort}` + '-' + `${route.query.order}`;
             option.value = options[orderString];
         }
@@ -282,7 +282,7 @@
         if (category.value && category.value !== '') {
             queryParams.value.category = category.value;
         }
-        if (option.value && option.value.sortField !== 'postDate') {
+        if (option.value) {
             queryParams.value.sort = option.value.sortField;
             queryParams.value.order = option.value.sortOrder;
         }
@@ -343,7 +343,7 @@
             title: article.title,
             content: articleContent,
             postDate: article.postDate,
-            updateDate: article.updateDate,
+            updateDate: new Date(),
             status: article.status,
             likes: article.likes,
             views: article.views,

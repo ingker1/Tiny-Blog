@@ -5,7 +5,8 @@
             <div class="content">
                 <span>状态：</span>
                 <select v-model="statusComputed" id="status" class="status">
-                    <option value="publish">已发布</option>
+                    <option value="publish" v-if="formatDate(new Date()) < localTime">定时发布</option>
+                    <option value="publish" v-else>已发布</option>
                     <option value="draft">草稿</option>
                     <option value="private">私密</option>
                     <option value="trash">垃圾</option>
