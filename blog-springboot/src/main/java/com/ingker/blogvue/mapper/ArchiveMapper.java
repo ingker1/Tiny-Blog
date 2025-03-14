@@ -3,6 +3,7 @@ package com.ingker.blogvue.mapper;
 
 import com.ingker.blogvue.dto.ArchiveListDTO;
 import com.ingker.blogvue.dto.ArticleArchive;
+import com.ingker.blogvue.dto.ArticleRecord;
 import com.ingker.blogvue.entity.Archive;
 import org.apache.ibatis.annotations.*;
 
@@ -105,4 +106,30 @@ public interface ArchiveMapper {
 
     @Update("UPDATE archive SET archive_name = #{archiveName}, taxonomy = #{taxonomy} WHERE archive_id = #{archiveId}")
     void update(Archive archive);
+
+    @Select("""
+            SELECT
+                YEAR(post_time) AS year,
+                MONTH(post_time) AS month,
+                article_id AS id,
+                article_title as title
+            FROM
+                article
+            WHERE
+                post_status = 'publish'
+            ORDER BY
+                YEAR(post_time) DESC, MONTH(post_time) ASC, post_time ASC
+            """)
+    List<ArticleRecord> getArchiveDates();
+
+    @Select("""
+            SELECT ar.archive_id, ar.archive_name, ar.taxonomy, COUNT(arr.archive_id) as count
+            FROM archive ar
+            LEFT JOIN archive_relationship arr ON ar.archive_id = arr.archive_id
+            WHERE ar.taxonomy = #{taxonomy}
+            GROUP BY ar.archive_id, ar.archive_name, ar.taxonomy
+            HAVING count > 1
+            ORDER BY ${sort} ${order}
+            """)
+    List<ArchiveListDTO> getAllByTaxonomyWithCount(String taxonomy, String sort, String order);
 }

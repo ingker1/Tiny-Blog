@@ -1,10 +1,13 @@
 package com.ingker.blogvue.service;
 
+import com.ingker.blogvue.dto.ArchiveArticle;
 import com.ingker.blogvue.dto.ArchiveListDTO;
+import com.ingker.blogvue.dto.ArticleRecord;
 import com.ingker.blogvue.entity.Archive;
 import com.ingker.blogvue.mapper.ArchiveMapper;
 import com.ingker.blogvue.mapper.ArchiveRelationshipMapper;
 import com.ingker.blogvue.util.Page;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.*;
 
 @Service
+@RequiredArgsConstructor
 public class ArchiveService {
     private static final Logger logger = LoggerFactory.getLogger(ArchiveService.class);
 
@@ -108,6 +112,43 @@ public class ArchiveService {
         logger.info("归档更新成功: {}", archive);
     }
 
+    public Map<Integer, Map<Integer, List<ArchiveArticle>>> getArchiveByDate() {
+        logger.info("查询时间线归档");
+
+        List<ArticleRecord> records = archiveMapper.getArchiveDates();
+
+        // 使用 TreeMap 保证年份按降序排序
+        Map<Integer, Map<Integer, List<ArchiveArticle>>> archiveMap = new TreeMap<>(Collections.reverseOrder());
+
+        for (ArticleRecord record : records) {
+            int year = record.getYear();
+            int month = record.getMonth();
+
+            // 获取年份节点，如果不存在则创建
+            archiveMap
+                    .computeIfAbsent(year, y -> new TreeMap<>()) // TreeMap 按月份升序
+                    .computeIfAbsent(month, m -> new ArrayList<>()) // 创建文章列表
+                    .add(new ArchiveArticle(record.getId(), record.getTitle()));
+        }
+
+        return archiveMap;
+    }
+
+    @Transactional
+    public List<ArchiveListDTO> getArchiveByCategory(String sort, String order) {
+        logger.info("查询分类归档");
+        String sortFiled = getValidSortField(sort);
+        String orderFiled = getValidOrder(order);
+        return archiveMapper.getAllByTaxonomyWithCount("category", sortFiled, orderFiled);
+    }
+
+    @Transactional
+    public List<ArchiveListDTO> getArchiveByTag(String sort, String order) {
+        logger.info("查询标签归档");
+        String sortFiled = getValidSortField(sort);
+        String orderFiled = getValidOrder(order);
+        return archiveMapper.getAllByTaxonomyWithCount("post_tag", sortFiled, orderFiled);
+    }
 
     private void validateArchive(Archive archive) {
         if (archive == null) {
