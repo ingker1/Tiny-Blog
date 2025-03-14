@@ -2,8 +2,6 @@
     <div>
         <Header/>
         <div name="articles" class="container">
-            <h2>文章列表</h2>
-            <!-- 文章列表 -->
             <div v-if="articles.length > 0" class="post">
                 <div v-for="article in articles" :key="article.articleId" >
                     <div class="article-item">

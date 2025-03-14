@@ -8,6 +8,9 @@ const routes = [
     { path: '/blog/:id', name: 'Post', component: () => import('@/views/Post') },
     { path: '/404', name: '404', component: () => import('@/views/404')},
     { path: '/login', name: 'Login', component: () => import('@/views/Login')},
+    { path: '/archive', name: 'Archive', component: () => import('@/components/Archive.vue')},
+    { path: '/about', name: 'About', component: () => import('@/views/About.vue')},
+    { path: '/index', name: 'Index', component: () => import('@/views/Index.vue')},
     { 
         path: '/admin', 
         name: 'admin', 
