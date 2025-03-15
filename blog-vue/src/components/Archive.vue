@@ -1,31 +1,53 @@
 <template>
-    <div>
-        <!-- ✅ 新增：全部展开/收起按钮 -->
-        <button @click="toggleAll" class="toggle-all-btn">
-            {{ isAllExpanded ? '全部收起' : '全部展开' }}
-        </button>
-
-        <div v-for="year in sortedYears" :key="year" class="year-section">
-            <h2>{{ year }}年</h2>
-            <ul>
-                <li 
-                    v-for="(articles, month) in sortedMonths(Timeline[year])" 
-                    :key="month" 
-                    @click="toggleMonth(year, Number(month))"
-                >
-                    {{ formatMonth(month) }}月 ({{ articles.length }})
-                    <span class="arrow" :class="{ expanded: isMonthExpanded(year, Number(month)) }">▶</span>
-                    <ul v-if="isMonthExpanded(year, Number(month))">
-                        <li 
-                            v-for="article in articles" 
-                            :key="article.id" 
-                            @click.stop="goToArticle(article.id)"
-                        >
-                            {{ article.title }}
-                        </li>
-                    </ul>
-                </li>
+    <div class="container">
+        <h2>分类</h2>
+        <div class="archive-list">
+            <ul v-for="category in categories" :key="category.archiveId">
+                <a :href="`archive/category/${category.name}`" class="archive-item">{{ category.name }}({{ category.count }})</a> 
             </ul>
+        </div>
+
+        <h2>标签</h2>
+        <div class="archive-list">
+            <ul v-for="tag in tags" :key="tag.archiveId">
+                <a :href="`archive/tag/${tag.name}`" class="archive-item">{{ tag.name }}({{ tag.count }})</a>
+            </ul>
+        </div>
+        
+        <h2>时间轴</h2>
+        <div>
+            <button @click="toggleAllYears" class="toggle-all-btn">
+                {{ isAllYearsExpanded ? '收起所有年份' : '展开所有年份' }}
+            </button>
+            <button @click="toggleAll" class="toggle-all-btn">
+                {{ isAllExpanded ? '收起所有文章' : '展开所有文章' }}
+            </button>
+
+            <div v-for="year in sortedYears" :key="year" class="year-section">
+                <h2 @click="toggleYear(year)">
+                    {{ year }}年
+                    <span class="arrow" :class="{ expanded: isYearExpanded(year) }">▶</span>
+                </h2>
+                <ul v-if="isYearExpanded(year)">
+                    <li 
+                        v-for="(articles, month) in sortedMonths(Timeline[year])" 
+                        :key="month" 
+                        @click="toggleMonth(year, Number(month))"
+                    >
+                        {{ month }}月 ({{ articles.length }}篇)
+                        <span class="arrow" :class="{ expanded: isMonthExpanded(year, Number(month)) }">▶</span>
+                        <ul v-if="isMonthExpanded(year, Number(month))">
+                            <li 
+                                v-for="article in articles" 
+                                :key="article.id" 
+                                @click.stop="goToArticle(article.id)"
+                            >
+                                <a :href="`/blog/${article.id}`">{{ article.title }}</a>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
         </div>
     </div>
 </template>
@@ -35,13 +57,19 @@ import { ref, computed, onMounted } from 'vue';
 import axios from 'axios';
 
 const Timeline = ref({});
+const categories = ref([]);
+const tags = ref([]);
 const expandedMonths = ref({});
+const expandedYears = ref({}); // 用于标识年份是否展开
 
-// ✅ 加载数据
 onMounted(async () => {
     try {
-        const res = await axios.get('http://localhost:8080/archives/date');
-        Timeline.value = res.data;
+        const timelineRes = await axios.get('http://localhost:8080/archives/date');
+        const categoryRes = await axios.get('http://localhost:8080/archives/categories');
+        const tagRes = await axios.get('http://localhost:8080/archives/tags');
+        Timeline.value = timelineRes.data;
+        categories.value = categoryRes.data;
+        tags.value = tagRes.data;
     } catch (err) {
         console.error('加载归档数据失败：', err);
     }
@@ -61,16 +89,19 @@ const sortedMonths = (months) => {
     );
 };
 
-// ✅ 格式化成两位数月份
-const formatMonth = (month) => {
-    return String(month).padStart(2, '0');
+// === 展开/折叠年份 ===
+const toggleYear = (year) => {
+    expandedYears.value[year] = !expandedYears.value[year];
 };
 
-// ✅ 展开/折叠月份
+// 判断年份是否展开
+const isYearExpanded = (year) => !!expandedYears.value[year];
+
+// === 展开/折叠月份 ===
 const toggleMonth = (year, month) => {
-    if (!expandedMonths.value[year]) {
-        expandedMonths.value[year] = [];
-    }
+    // if (!expandedMonths.value[year]) {
+    //     expandedMonths.value[year] = [];
+    // }
     if (expandedMonths.value[year].includes(month)) {
         expandedMonths.value[year] = expandedMonths.value[year].filter(m => m !== month);
     } else {
@@ -78,47 +109,81 @@ const toggleMonth = (year, month) => {
     }
 };
 
-// ✅ 判断月份是否展开
+// 判断月份是否展开
 const isMonthExpanded = (year, month) => {
     return expandedMonths.value[year]?.includes(Number(month));
 };
 
-// ✅ 判断是否全部展开
-const isAllExpanded = computed(() => {
-    return sortedYears.value.every(year =>
-        Timeline.value[year] &&
-        Object.keys(Timeline.value[year]).map(Number).every(month =>
-            expandedMonths.value[year]?.includes(month)
-        )
-    );
+// === 全部展开/折叠年份 ===
+const isAllYearsExpanded = computed(() => {
+    return sortedYears.value.every(year => expandedYears.value[year]);
 });
 
-// ✅ 全部展开/收起（修复逻辑）
-const toggleAll = () => {
-    if (isAllExpanded.value) {
-        // 全部收起
-        expandedMonths.value = {};
+const toggleAllYears = () => {
+    if (isAllYearsExpanded.value) {
+        expandedYears.value = {};
     } else {
-        // 全部展开
-        expandedMonths.value = sortedYears.value.reduce((acc, year) => {
-            acc[year] = Object.keys(Timeline.value[year]).map(Number);
+        expandedYears.value = sortedYears.value.reduce((acc, year) => {
+            acc[year] = true;
             return acc;
         }, {});
     }
 };
 
-// ✅ 点击文章跳转
-const goToArticle = (id) => {
-    console.log(`跳转到文章 ID: ${id}`);
-    // router.push(`/article/${id}`);
+// === 全部展开/折叠月份和文章 ===
+const isAllExpanded = computed(() => {
+    return sortedYears.value.every(year => {
+        // 如果年份未展开或未定义，直接判定为“未完全展开”
+        if (!expandedMonths.value[year]) return false;
+
+        // 判断该年份的所有月份是否都已展开
+        return Object.keys(Timeline.value[year])
+            .map(Number)
+            .every(month => expandedMonths.value[year]?.includes(month));
+    });
+});
+
+
+const toggleAll = () => {
+    if (isAllExpanded.value) {
+        expandedMonths.value = {};
+    } else {
+        expandedMonths.value = sortedYears.value.reduce((acc, year) => {
+            acc[year] = Object.keys(Timeline.value[year]).map(Number);
+            return acc;
+        }, {});
+        // 直接展开年份，保证年份也会显示
+        expandedYears.value = sortedYears.value.reduce((acc, year) => {
+            acc[year] = true;
+            return acc;
+        }, {});
+    }
 };
 </script>
 
 <style scoped>
-/* ✅ 全部展开/收起按钮 */
+.container {
+    position: relative;
+    transform: translateX(-50%);
+    left: 50%;
+    width: 60vw;
+}
+
+.archive-list {
+    display: flex;
+    flex-wrap:wrap;
+}
+
+.archive-item {
+    border: 1px solid;
+    padding: 5px;
+}
+
+/* 全部展开/收起按钮 */
 .toggle-all-btn {
     margin-bottom: 15px;
-    padding: 8px 16px;
+    margin-right: 20px;
+    padding: 8px 10px;
     font-size: 14px;
     background-color: #42b983;
     color: #fff;
@@ -160,7 +225,7 @@ li:hover {
     color: #42b983;
 }
 
-/* ✅ 箭头图标 */
+/* 箭头图标 */
 .arrow {
     display: inline-block;
     transition: transform 0.2s ease;
@@ -173,7 +238,7 @@ li:hover {
     transform: rotate(0);
 }
 
-/* ✅ 子文章列表样式 */
+/* 子文章列表样式 */
 li ul {
     margin-top: 5px;
     padding-left: 20px;
@@ -187,5 +252,18 @@ li ul li {
 
 li ul li:hover {
     color: #42b983;
+}
+
+a {
+    color: inherit;          /* 继承父元素的颜色 */
+    text-decoration: none;   /* 去掉下划线 */
+}
+
+a:visited {
+    color: inherit;          /* 访问过的链接颜色与普通文字一致 */
+}
+
+a:hover {
+    text-decoration: underline; /* 鼠标悬停时显示下划线（可选） */
 }
 </style>
