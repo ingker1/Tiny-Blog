@@ -17,12 +17,13 @@ public class ArticleController {
 
     @GetMapping("/articles")
     public ResponseEntity<Page<ArticleListDTO>> getPublish(
-            @RequestParam(value="page", defaultValue = "0") Integer page,
+            @RequestParam(value="page", defaultValue = "1") Integer page,
             @RequestParam(value="limit", defaultValue = "10") Integer limit,
-            @RequestParam(value="category") String category) {
+            @RequestParam(value="category", defaultValue = "") String category,
+            @RequestParam(value="tag", defaultValue = "") String tag) {
         page = page<0?0:page;
         try {
-            Page<ArticleListDTO> articlePage = articleService.getAll(page, limit, "postDate", "desc", category, "publish","");
+            Page<ArticleListDTO> articlePage = articleService.getAll(page, limit, "postDate", "desc", category, "publish",tag, "");
             return ResponseEntity.ok(articlePage); // 返回 200 和查询结果
         } catch (Exception e) {
             System.out.println(e.getMessage());
@@ -53,16 +54,17 @@ public class ArticleController {
 
     @GetMapping("/admin/articles")
     public ResponseEntity<Page<ArticleListDTO>> getAll(
-            @RequestParam(value="page", defaultValue = "0") Integer page,
+            @RequestParam(value="page", defaultValue = "1") Integer page,
             @RequestParam(value="limit", defaultValue = "10") Integer limit,
-            @RequestParam(value="sort") String sort,
-            @RequestParam(value="order") String order,
-            @RequestParam(value="category") String category,
-            @RequestParam(value="status") String status,
-            @RequestParam(value="keywords") String searchKeyword) {
+            @RequestParam(value="sort", defaultValue = "") String sort,
+            @RequestParam(value="order", defaultValue = "") String order,
+            @RequestParam(value="category", defaultValue = "") String category,
+            @RequestParam(value="tag", defaultValue = "") String tag,
+            @RequestParam(value="status", defaultValue = "") String status,
+            @RequestParam(value="keywords", defaultValue = "") String searchKeyword) {
         page = page<0?0:page;
         try {
-            Page<ArticleListDTO> articlePage = articleService.getAll(page, limit, sort, order, category, status, searchKeyword);
+            Page<ArticleListDTO> articlePage = articleService.getAll(page, limit, sort, order, category, status, tag, searchKeyword);
             return ResponseEntity.ok(articlePage); // 返回 200 和查询结果
         } catch (Exception e) {
             System.out.println(e.getMessage());

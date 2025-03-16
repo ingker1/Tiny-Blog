@@ -40,7 +40,7 @@ public class ArticleService {
 
     @Transactional
     public Page<ArticleListDTO> getAll(Integer page, Integer size, String sort, String order,
-                                       String category, String status, String searchKeyword) {
+                                       String category, String status, String tag, String searchKeyword) {
         validatePositiveInteger(page, "页码");
         validatePositiveInteger(size, "每页数量");
 
@@ -57,8 +57,8 @@ public class ArticleService {
         List<String> keywords = processSearchKeyword(searchKeyword);
 
         int offset = size * (page - 1);
-        int total = articleMapper.countBySearchAndFilter(status, category, keywords);
-        List<Article> articles = articleMapper.searchAndFilter(status, category, keywords, dbSortField, order, size, offset);
+        int total = articleMapper.countBySearchAndFilter(status, category, tag, keywords);
+        List<Article> articles = articleMapper.searchAndFilter(status, category, tag, keywords, dbSortField, order, size, offset);
 
         if (articles.isEmpty()) {
             return new Page<>(Collections.emptyList(), total, page, size);
@@ -72,8 +72,8 @@ public class ArticleService {
         // 组装 DTO
         List<ArticleListDTO> articleListDTOs = buildArticleListDTOs(articles, categoryMap, tagMap);
 
-        logger.info("分页查询文章，分类：{}，发布状态：{}，搜索关键词：{}，页数：{}，每页个数：{}，总记录数：{}，排序：{}，顺序：{}",
-                category, status, searchKeyword, page, size, total, sort, order);
+        logger.info("分页查询文章，分类：{}、标签：{}、发布状态：{}、搜索关键词：{}、页数：{}、每页个数：{}、总记录数：{}、排序：{}、顺序：{}",
+                category, tag, status, searchKeyword, page, size, total, sort, order);
         return new Page<>(articleListDTOs, total, page, size);
     }
 

@@ -30,8 +30,11 @@ public interface ArticleMapper {
               <if test="status != null and status != ''">
                   at.post_status = #{status}
               </if>
-              <if test="archiveName != null and archiveName != ''">
-                  AND ar.archive_name = #{archiveName}
+              <if test="category != null and category != ''">
+                  AND ar.archive_name = #{category} AND ar.taxonomy = 'category'
+              </if>
+              <if test="tag != null and tag != ''">
+                  AND ar.archive_name = #{tag} AND ar.taxonomy = 'post_tag'
               </if>
               <if test="keywords != null and keywords.size() > 0">
                   AND (
@@ -46,7 +49,7 @@ public interface ArticleMapper {
             ORDER BY ${sort} ${order}
             LIMIT #{limit} OFFSET #{offset}
     </script>""")
-    List<Article> searchAndFilter(String status, String archiveName, List<String> keywords,
+    List<Article> searchAndFilter(String status, String category, String tag, List<String> keywords,
                                   String sort, String order, Integer limit, Integer offset);
 
 
@@ -60,9 +63,12 @@ public interface ArticleMapper {
                      <if test="status != null and status != ''">
                          at.post_status = #{status}
                      </if>
-                     <if test="archiveName != null and archiveName != ''">
-                         AND ar.archive_name = #{archiveName}
-                     </if>
+                     <if test="category != null and category != ''">
+                          AND ar.archive_name = #{category} AND ar.taxonomy = 'category'
+                      </if>
+                      <if test="tag != null and tag != ''">
+                          AND ar.archive_name = #{tag} AND ar.taxonomy = 'post_tag'
+                      </if>
                      <if test="keywords != null and keywords.size() > 0">
                          AND (
                          <foreach collection='keywords' item='keyword' separator='AND'>
@@ -73,7 +79,7 @@ public interface ArticleMapper {
                      </if>
                  </where>
     </script>""")
-    Integer countBySearchAndFilter(String status, String archiveName, List<String> keywords);
+    Integer countBySearchAndFilter(String status, String category, String tag, List<String> keywords);
 
     /**
      * 使用useGeneratedKeys，MyBatis 可以自动获取 INSERT 后的主键
