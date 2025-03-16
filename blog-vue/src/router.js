@@ -8,7 +8,14 @@ const routes = [
     { path: '/blog/:id', name: 'Post', component: () => import('@/views/Post') },
     { path: '/404', name: '404', component: () => import('@/views/404')},
     { path: '/login', name: 'Login', component: () => import('@/views/Login')},
-    { path: '/archive', name: 'Archive', component: () => import('@/components/Archive.vue')},
+
+    { path: '/archive', name: 'Archive', component: () => import('@/components/Archive.vue') },
+    { path: '/archive/category/:name/page/:page', name: 'Category', component: () => import('@/components/ArchiveArticle.vue') },
+    { path: '/archive/category/:name', name: 'CategoryPage', component: () => import('@/components/ArchiveArticle.vue') },
+    { path: '/archive/tag/:name/page/:page', name: 'TagPage', component: () => import('@/components/ArchiveArticle.vue') },
+    { path: '/archive/tag/:name', name: 'Tag', component: () => import('@/components/ArchiveArticle.vue') },
+   
+
     { path: '/about', name: 'About', component: () => import('@/views/About.vue')},
     { path: '/index', name: 'Index', component: () => import('@/views/Index.vue')},
     { 
