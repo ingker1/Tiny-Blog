@@ -51,7 +51,6 @@
     const currentPage = ref(1);     // 当前页码
     const totalPages = ref(1);      // 总页数
     const pageSize = ref(10);       // 每页文章数量
-    const category = ref('');       // 文章分类
     const router = useRouter(); 	// 路由管理器
     const route = useRoute();       // url路由
 
@@ -72,8 +71,7 @@
             const response1 = await axios.get('http://localhost:8080/articles', {
                 params: {
                     page: currentPage.value,
-                    limit: pageSize.value,
-                    category: category.value
+                    limit: pageSize.value
                 },
             });
             const data = response1.data;

@@ -99,9 +99,9 @@ const isYearExpanded = (year) => !!expandedYears.value[year];
 
 // === 展开/折叠月份 ===
 const toggleMonth = (year, month) => {
-    // if (!expandedMonths.value[year]) {
-    //     expandedMonths.value[year] = [];
-    // }
+    if (!expandedMonths.value[year]) {
+        expandedMonths.value[year] = [];
+    }
     if (expandedMonths.value[year].includes(month)) {
         expandedMonths.value[year] = expandedMonths.value[year].filter(m => m !== month);
     } else {
@@ -177,6 +177,12 @@ const toggleAll = () => {
 .archive-item {
     border: 1px solid;
     padding: 5px;
+}
+
+.archive-item:hover {
+    color: #fff;
+    background-color: #369f6c;
+    text-decoration: none;
 }
 
 /* 全部展开/收起按钮 */
