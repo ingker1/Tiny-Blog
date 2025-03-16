@@ -2,6 +2,7 @@ package com.ingker.blogvue.service;
 
 import com.ingker.blogvue.dto.ArchiveArticle;
 import com.ingker.blogvue.dto.ArchiveListDTO;
+import com.ingker.blogvue.dto.ArticleCollection;
 import com.ingker.blogvue.dto.ArticleRecord;
 import com.ingker.blogvue.entity.Archive;
 import com.ingker.blogvue.mapper.ArchiveMapper;
@@ -132,6 +133,13 @@ public class ArchiveService {
         }
 
         return archiveMap;
+    }
+
+    @Transactional
+    public List<ArticleCollection> getCollection(Integer articleId) {
+        logger.info("查询文章集合：{}", articleId);
+        validateId(articleId, "文章ID");
+        return archiveMapper.getCollection(articleId);
     }
 
     @Transactional

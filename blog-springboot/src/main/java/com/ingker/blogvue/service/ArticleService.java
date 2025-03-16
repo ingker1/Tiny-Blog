@@ -204,6 +204,20 @@ public class ArticleService {
     }
 
     @Transactional
+    public void setToCollection(Integer articleId, Integer collectionId) {
+        validatePositiveInteger(articleId, "文章ID");
+        validatePositiveInteger(collectionId, "文章集合ID");
+
+        try {
+            archiveRelationshipMapper.add(collectionId, articleId);
+            logger.info("文章添加到集合成功: 文章ID={}、集合ID={}", articleId, collectionId);
+        } catch (Exception e) {
+            logger.error("文章添加到集合失败: 文章ID={}、集合ID={}、错误信息={}", articleId, collectionId, e.getMessage(), e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Transactional
     public void increaseField(String field, Integer id) {
         validatePositiveInteger(id, "文章ID");
         try {

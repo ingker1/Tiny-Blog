@@ -139,4 +139,16 @@ public class ArticleController {
                     .body("更新文章浏览量失败" + e.getMessage());
         }
     }
+
+    @PutMapping("admin/articles/collection")
+    public ResponseEntity<Object> setCollection(@RequestParam("articleId") Integer articleId,
+                                                @RequestParam("collectionId") Integer collectionId) {
+        try {
+            articleService.setToCollection(articleId, collectionId);
+            return ResponseEntity.ok().body(null);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("添加到文章合集失败" + e.getMessage());
+        }
+    }
 }

@@ -2,6 +2,7 @@ package com.ingker.blogvue.controller;
 
 import com.ingker.blogvue.dto.ArchiveArticle;
 import com.ingker.blogvue.dto.ArchiveListDTO;
+import com.ingker.blogvue.dto.ArticleCollection;
 import com.ingker.blogvue.entity.Archive;
 import com.ingker.blogvue.service.ArchiveService;
 import com.ingker.blogvue.util.Page;
@@ -128,6 +129,18 @@ public class ArchiveController {
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             logger.error(e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(null); // 返回 500 错误
+        }
+    }
+
+    @GetMapping("/collections")
+    public ResponseEntity<List<ArticleCollection>> getCollection(@RequestParam("articleId") Integer id) {
+        try {
+            List<ArticleCollection> bean = archiveService.getCollection(id);
+            return ResponseEntity.ok(bean); // 返回 200 和查询结果
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(null); // 返回 500 错误
         }

@@ -3,6 +3,7 @@ package com.ingker.blogvue.mapper;
 
 import com.ingker.blogvue.dto.ArchiveListDTO;
 import com.ingker.blogvue.dto.ArticleArchive;
+import com.ingker.blogvue.dto.ArticleCollection;
 import com.ingker.blogvue.dto.ArticleRecord;
 import com.ingker.blogvue.entity.Archive;
 import org.apache.ibatis.annotations.*;
@@ -132,4 +133,21 @@ public interface ArchiveMapper {
             ORDER BY ${sort} ${order}
             """)
     List<ArchiveListDTO> getAllByTaxonomyWithCount(String taxonomy, String sort, String order);
+
+
+    @Select("""
+            select at.article_id, at.article_title, at.post_time
+            from article at
+            inner join archive_relationship arr on at.article_id = arr.article_id
+            inner join archive ar on ar.archive_id = arr.archive_id
+            where ar.taxonomy = 'collection'
+            and ar.archive_name in (
+                select ar.archive_name
+                from archive_relationship arr
+                inner join archive ar on arr.archive_id = ar.archive_id
+                where arr.article_id = #{articleId} and ar.taxonomy = 'collection'
+            )
+            ORDER BY at.post_time
+            """)
+    List<ArticleCollection> getCollection(Integer articleId);
 }
