@@ -11,7 +11,7 @@ import java.util.Date;
 @Setter
 @Getter
 @ToString
-@JsonPropertyOrder({"articleId", "title", "postDate"})
+@JsonPropertyOrder({"articleId", "title", "postDate", "collection"})
 public class ArticleCollection {
     private Integer articleId;
 
@@ -20,4 +20,7 @@ public class ArticleCollection {
 
     @JsonProperty("postDate")
     private Date postTime;
+
+    @JsonProperty("collection")
+    private String archiveName;
 }

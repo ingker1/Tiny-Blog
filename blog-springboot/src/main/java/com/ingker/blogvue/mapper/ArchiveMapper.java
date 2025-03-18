@@ -136,7 +136,7 @@ public interface ArchiveMapper {
 
 
     @Select("""
-            select at.article_id, at.article_title, at.post_time
+            select at.article_id, at.article_title, at.post_time, ar.archive_name
             from article at
             inner join archive_relationship arr on at.article_id = arr.article_id
             inner join archive ar on ar.archive_id = arr.archive_id
