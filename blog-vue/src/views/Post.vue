@@ -4,23 +4,23 @@
         <div name="article">
             <h1>{{article.title}}</h1>
             <div class="post-meta">{{ article.postDate }}</div>
-            <div class="collection-container">
-        <div class="collection-title">
-            合集：{{ collections[0]?.collection }}
-            <!-- 切换展开/收缩按钮 -->
-            <button @click="toggleExpand" class="toggle-btn">
-                {{ isExpanded ? '收起 ▲' : '展开 ▼' }}
-            </button>
-            </div>
-            
-            <!-- 文章列表（使用 v-show 控制显示） -->
-            <div class="collection-list" v-show="isExpanded">
-                <div v-for="(article, index) in collections" :key="article.articleId" class="collection-bar" @click="getCollectionArticle(article.articleId)">
-                    <div>{{ index + 1 }}. {{ article.title }}</div>
-                    <div class="collection-date">{{ formatDate(article.postDate) }}</div>
+            <div v-if="collections.length > 0" class="collection-container">
+                <div  class="collection-title">
+                    合集：{{ collections[0]?.collection }}
+                    <!-- 切换展开/收缩按钮 -->
+                    <button @click="toggleExpand" class="toggle-btn">
+                        {{ isExpanded ? '收起 ▲' : '展开 ▼' }}
+                    </button>
+                </div>
+                    
+                <!-- 文章列表（使用 v-show 控制显示） -->
+                <div class="collection-list" v-show="isExpanded">
+                    <div v-for="(article, index) in collections" :key="article.articleId" class="collection-bar" @click="getCollectionArticle(article.articleId)">
+                        <div>{{ index + 1 }}. {{ article.title }}</div>
+                        <div class="collection-date">{{ formatDate(article.postDate) }}</div>
+                    </div>
                 </div>
             </div>
-        </div>
             <div v-html="article.content" class="post-content"></div>       
         </div>
         <div class="post-foot">

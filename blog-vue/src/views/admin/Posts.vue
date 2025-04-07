@@ -378,6 +378,7 @@
                 status: 'trash',
                 likes: article.likes,
                 views: article.views,
+                comments: article.comments,
                 category: article.category,
                 tags: article.tags
             })
