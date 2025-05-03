@@ -1,45 +1,49 @@
 <template>
-    <h1>评论管理</h1>
+    <h2>评论管理</h2>
     <div class="container">
         <table>
             <thead>
                 <tr>
-                <th>用户</th>
-                <th>评论内容</th>
-                <th>关联文章</th>
-                <th>提交日期</th>
+                <th style="width: 15%;">用户</th>
+                <th style="width: 40%;">评论内容</th>
+                <th style="width: 30%;">关联文章</th>
+                <th style="width: 20%;">提交日期</th>
                 </tr>
             </thead>
             <tbody>
-                <tr v-for="comment in comments" :key="comment.publishDate">
-                <td>{{ comment.author }}</td>
-                <td>
-                    <div class="in-td">
-                        {{ comment.content }}<br/>
-                        <button v-if="comment.status != 'read'" @click="readMark(comment.commentId)">标为已读</button>
-                        <button class="delete" @click="deleteComments(comment.commentId)">删除</button>
-                    </div>     
-                </td>
-                <td>
-                    <div class="in-td">
-                        <a :href="`/admin/edit=${ comment.articleId }`">{{ comment.articleTitle }}</a><br/>
-                        <a :href="`/blog/${ comment.articleId }`">查看文章</a>
-                    </div>    
-                </td>
-                <td>{{ formatDate(comment.publishDate) }}</td>
-                </tr>
+                <template v-for="(comment, index) in comments" :key="comment.publishDate">
+                    <tr v-if="editingArticleIndex !== index"
+                        :class="index % 2 === 0 ? 'odd-row':'even-row'">
+                    <td>{{ comment.author }}</td>
+                    <td>
+                        <div class="in-td">
+                            {{ comment.content }}<br/>
+                            <button v-if="comment.status != 'read'" @click="readMark(comment.commentId)">标为已读</button>
+                            <button class="delete" @click="deleteComments(comment.commentId)">删除</button>
+                        </div>     
+                    </td>
+                    <td>
+                        <div class="in-td">
+                            <a :href="`/admin/edit=${ comment.articleId }`">{{ comment.articleTitle }}</a><br/>
+                            <a :href="`/blog/${ comment.articleId }`">查看文章</a>
+                        </div>    
+                    </td>
+                    <td>{{ formatDate(comment.publishDate) }}<br>
+                    </td>
+                    </tr>
+                </template>
             </tbody>
         </table>
 
-            <!-- 分页组件 -->
-        <div style="margin: 10px; text-align: right;">
+        <!-- 分页组件 -->
+        <div class="paging-bar">
             <button @click="changePage(currentPage - 1)" :disabled="currentPage === 1">上一页</button>
             <span> {{ currentPage }} / {{ totalPages }} 页</span>
             <button @click="changePage(currentPage + 1)" :disabled="currentPage === totalPages">下一页</button>
 
             <!-- 跳转到指定页码的输入框 -->
-            <input type="number" v-model="pageInput" :min="1" :max="totalPages" style="width:40px;" />
-            <span>页</span>
+            <input type="number" v-model="pageInput" :min="1" :max="totalPages" style="width:40px; font-size: 18px;" @keyup.enter="changePage(pageInput)"/>
+            &nbsp;&nbsp;<span>页</span>
             <button @click="changePage(pageInput)">跳转</button>
 
             <!-- 每页条数选择 -->
@@ -50,7 +54,7 @@
                 <option :value="50">50</option>
                 <option :value="100">100</option>
             </select>
-            <span>条/页</span>
+            &nbsp;&nbsp;<span>条/页</span>
         </div>
     </div>
 </template>
@@ -153,6 +157,7 @@
     padding: 20px;
     background-color: #fff;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    font-family: 'M';
 }
 
 h1 {
@@ -196,6 +201,22 @@ span {
 
 .in-td {
     line-height: 1.5em;
+}
+
+.even-row {
+    background-color: #f9f9f9;
+}
+
+.odd-row {
+    background-color: #f3f3f3;
+}
+
+.paging-bar {
+    align-items: center;
+    display: flex; 
+    justify-content: flex-end;
+    font-size: 16px;
+    font-family: "M";
 }
 
 </style>
