@@ -1,54 +1,46 @@
 <template>
     <div class ="quickEdit">
         <div class="editItem">
-            <h3>发布</h3>
+            <h3>发布状态</h3>
             <div class="content">
-                <span>状态：</span>
-                <select v-model="statusComputed" id="status" class="status">
-                    <option value="publish" v-if="formatDate(new Date()) < localTime">定时发布</option>
-                    <option value="publish" v-else>已发布</option>
-                    <option value="draft">草稿</option>
-                    <option value="private">私密</option>
-                    <option value="trash">垃圾</option>
-                </select><br />
+                <CustomSelect
+                    v-model="statusComputed"
+                    :options="statusOptions"
+                    placeholder="选择状态"
+                />
             </div>
         </div>
       
         <div class="editItem">
-            <h3>时间</h3>
+            <h3>发布时间</h3>
             <div class="content">
                 <input v-model="timeComputed" type="datetime-local"><br />
             </div>
             
         </div>
-      
-
-        <div class="editItem">
+            <div class="editItem">
             <h3>分类</h3>
             <div class="content">
-                <select v-model="categoryComputed" id="categories">
-                    <option v-for="category in categories" :key="category.archiveId" :value="category">
-                    {{ category.name }}
-                    </option>
-                </select>
+                <CustomSelect
+                    v-model="categoryComputed"
+                    :options="categoryOptions"
+                    placeholder="选择分类"
+                />
             </div>
-
         </div>
 
-    
         <div class="editItem">
             <h3>标签</h3>
-            <div class="content">
-                <input v-model="inputTagText" type="text" style="height: 24px;">
-                <button @click="addTags" style="height: 30px; margin-left: 10px;">添加</button>
-            </div>
-            
+            <div class="content" style="flex-wrap: nowrap;">
+                <input v-model="inputTagText" type="text">
+                <button @click="addTags" style="width: 50px;height: 37px; margin-left: 10px;">添加</button>
+            </div>  
         </div>
 
         <div class="editItem">
-            <ul class="content">
-                <li v-for="(tag, index) in tagsComputed" :key="index">{{ tag.name }} 
-                <span @click="removeTag(index)" style="cursor: pointer; margin-left: 10px; color: red;">删除</span>
+            <ul class="content" style="padding: 0;">
+                <li class="text-with-icon" v-for="(tag, index) in tagsComputed" :key="index">{{ tag.name }} 
+                <span class="delete-icon" @click="removeTag(index)"></span>
                 </li>      
             </ul>
         </div>
@@ -58,6 +50,26 @@
   
 <script setup>
     import { ref, computed, watch, onMounted, defineProps, defineEmits } from 'vue';
+    import CustomSelect from '@/components/CustomSelect.vue';
+
+    // 替换为你的状态列表（动态设置 label）
+    const statusOptions = computed(() => [
+        {
+            value: 'publish',
+            label: formatDate(new Date()) < localTime.value ? '定时发布' : '已发布'
+        },
+        { value: 'draft', label: '草稿' },
+        { value: 'private', label: '私密' },
+        { value: 'trash', label: '垃圾' }
+    ]);
+
+    // 分类 options，把每个分类对象映射成 { value, label }
+    const categoryOptions = computed(() => {
+        return (props.categories || []).map(cat => ({
+            value: cat.archiveId,
+            label: cat.name
+        }));
+    });
 
     // 接收父组件的props
     const props = defineProps({
@@ -132,12 +144,14 @@
     });
 
     const categoryComputed = computed({
-        get: () => localCategory.value,
+        get: () => localCategory.value ? localCategory.value.archiveId : null,
         set: (newValue) => {
-            localCategory.value = newValue;
-            emit('update:category', newValue);
+            const selectedCategory = props.categories.find(cat => cat.archiveId === newValue);
+            localCategory.value = selectedCategory;
+            emit('update:category', selectedCategory);
         }
     });
+
 
     const tagsComputed = computed({
         get: () => localTags.value,
@@ -171,6 +185,68 @@
     // 确保异步加载数据后再进行其他操作
     onMounted(() => {
         console.log('子组件已挂载，等待父组件传递的数据...');
+        console.log('categories:', props.categories);
     });
 
 </script>
+
+<style scoped>
+.delete-icon {
+    width: 18px;
+    height: 18px;
+    background-color: #007BFF;
+    border-radius: 50%;
+    position: relative;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    display: inline-block;
+    vertical-align: text-bottom;
+    margin-left: 3px;
+}
+
+.delete-icon::before,
+.delete-icon::after {
+    content: '';
+    position: absolute;
+    background-color: white;
+    width: 10px;
+    height: 2px;
+    top: 50%;
+    left: 50%;
+    transform-origin: center;
+}
+
+.delete-icon::before {
+    transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.delete-icon::after {
+    transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+.delete-icon:hover {
+    background-color: #FF4136;
+}
+
+.text-with-icon {
+    display: inline-flex;
+    align-items: center;
+    font-size: 16px;
+    font-family: sans-serif;
+    margin-bottom: 10px;
+    margin-right: 10px;
+    /* float: left; */
+}
+
+.quickEdit {
+    margin-bottom: 20px;
+}
+
+.content {
+    display: flex;
+    flex-wrap: wrap;      /* 允许内容换行 */
+    gap: 10px;            /* 标签之间的间距可自定义 */
+    max-width: 100%;      /* 限制不能超出表格单元格 */
+    box-sizing: border-box;
+}
+</style>

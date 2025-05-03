@@ -1,35 +1,35 @@
 <template>
-    <h1>文章列表</h1>
+    <h2>文章列表</h2>
 
     <!-- 筛选和排序 -->
     <div class="filters">
-        <label for="status">发布状态:</label>
-        <select v-model="status" id="status" @change="applyFilters()">
-            <option value="">全部</option>
-            <option value="publish">已发布</option>
-            <option value="draft">草稿</option>
-            <option value="trash">垃圾</option>
-            <option value="private">私密</option>
-        </select>
+        <CustomSelect
+        v-model="status"
+        :options="statusOptions"
+        placeholder="Select an option"
+        :searchable="true"
+        @change="applyFilters()"
+        />
 
-        <label for="category">分类:</label>
-        <select v-model="category" id="category" @change="applyFilters()">
-            <option value="">全部</option>
-            <option v-for="categoryItem in categories" :key="categoryItem.archiveId" :value="categoryItem.name">
-            {{ categoryItem.name }}
-            </option>
-        </select>
+        <CustomSelect
+        v-model="category"
+        :options="categories"
+        placeholder="Select an option"
+        :searchable="true"
+        @change="applyFilters()"
+        />
 
-        <label for="sort">排序:</label>
-        <select v-model="option" id="option" @change="applyFilters()">    
-            <option v-for="optionItem in options" :key="optionItem.id" :value="optionItem">
-                {{ optionItem.label }}
-            </option>
-        </select>
-        
+        <CustomSelect
+        v-model="option"
+        :options="options"
+        placeholder="Select an option"
+        :searchable="true"
+        @change="applyFilters()"
+        />
+
         <!-- 搜索框和图标并行 -->
-        <div style="display: inline-flex; align-items: center; border: 1px solid #ccc; margin-bottom: 10px; padding: 5px 10px; border-radius: 4px;">
-            <input v-model="searchKeywords" @keyup.enter="applyFilters()" placeholder="按照关键词搜索（空格分开）" style="padding: 5px, 5px; margin-right: 8px; border: none; outline: none;">
+        <div class="search-bar">
+            <input class="search-input" v-model="searchKeywords" @keyup.enter="applyFilters()" placeholder="按照关键词搜索（空格分开）">
             <div @click="clearSearch" style="width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;">
                 <svg viewBox="0 0 24 24" width="1.2em" height="1.2em" style="align-items: center;">
                     <path fill="currentColor" d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10s-4.477 10-10 10Zm0-2a8 8 0 1 0 0-16a8 8 0 0 0 0 16Zm0-9.414l2.828-2.829l1.415 1.415L13.414 12l2.829 2.828l-1.415 1.415L12 13.414l-2.828 2.829l-1.415-1.415L10.586 12L7.757 9.172l1.415-1.415L12 10.586Z"></path>
@@ -46,15 +46,16 @@
                 <th style="width: 40%;">文章标题</th>
                 <th style="width: 10%;">分类</th>
                 <th style="width: 20%;">标签</th>
-                <th style="width: 5%;">状态</th>
+                <th style="width: 7%;">状态</th>
                 <th style="width: 15%;">时间</th>
                 <th style="width: 10%">数据</th>
                 </tr>
             </thead>
 
             <tbody>
-                <template v-for="(article, index) in articles" :key="article.updateDate">
-                    <tr v-if="editingArticleIndex !== index">
+                <template v-for="(article, index) in articles" :key="article.articleId">
+                    <tr v-if="editingArticleIndex !== index"
+                        :class="index % 2 === 0 ? 'odd-row':'even-row'">
                         <td>{{ article.title }}
                             <p>摘要：{{ article.summary.substring(0, 100) }}</p>
                             <div class="quickbutton">
@@ -79,9 +80,10 @@
                     </tr>
 
                     <!-- 动态插入编辑表单 -->
-                    <tr v-if="editingArticleIndex === index">
-                        <td>
-                            文章标题：<input v-model="article.title" type="text" style="width: 400px;">
+                    <tr v-if="editingArticleIndex === index"
+                        :class="index % 2 === 0 ? 'odd-row':'even-row'">
+                        <td :colspan="6">
+                            文章标题：<input v-model="article.title" type="text" style="width: 400px; height: 32px; font-size: 18px;">
                             <QuickEdit
                             :categories="categories"
                             v-model:status="article.status"
@@ -99,14 +101,14 @@
         </table>
 
         <!-- 分页组件 -->
-        <div style="margin: 10px; text-align: right;">
+        <div class="paging-bar">
             <button @click="changePage(currentPage - 1)" :disabled="currentPage === 1">上一页</button>
             <span> {{ currentPage }} / {{ totalPages }} 页</span>
             <button @click="changePage(currentPage + 1)" :disabled="currentPage === totalPages">下一页</button>
 
             <!-- 跳转到指定页码的输入框 -->
-            <input type="number" v-model="pageInput" :min="1" :max="totalPages" style="width:40px;" />
-            <span>页</span>
+            <input type="number" v-model="pageInput" :min="1" :max="totalPages" style="width:40px; font-size: 18px;" @keyup.enter="changePage(pageInput)"/>
+            &nbsp;&nbsp;<span>页</span>
             <button @click="changePage(pageInput)">跳转</button>
 
             <!-- 每页条数选择 -->
@@ -117,7 +119,7 @@
                 <option :value="50">50</option>
                 <option :value="100">100</option>
             </select>
-            <span>条/页</span>
+            &nbsp;&nbsp;<span>条/页</span>
         </div>
     </div>
 </template>
@@ -125,9 +127,9 @@
 <script setup>
     import { ref, onMounted } from 'vue';
     import { useRoute, useRouter } from 'vue-router'; // 导入useRouter来进行路由跳转
-    import QuickEdit from '@/components/QuickEdit.vue';
     import axios from 'axios';
-
+    import QuickEdit from '@/components/QuickEdit.vue';
+    import CustomSelect from '@/components/CustomSelect.vue';
     import '@/assets/style.css';
 
 
@@ -135,7 +137,7 @@
     const articles = ref([]);           // 用于存储文章列表
     const currentPage = ref(1);         // 当前页
     const totalPages = ref(1);          // 总页数
-    const status = ref('publish');      // 发布状态
+    const status = ref('');             // 发布状态
     const RecordPerPage = ref(15);    	// 每页记录数
     const searchKeywords = ref('')      // 搜索关键词
     const router = useRouter(); 	    // 路由管理器
@@ -148,33 +150,44 @@
     const editingArticleIndex = ref(null); // 当前正在编辑的文章的索引
 
     // 定义排序选项
-    const options  = {
-        'postDate-desc': { sortField: 'postDate', label: '最近发布', sortOrder: 'desc' },
-        'postDate-asc': { sortField: 'postDate', label: '最早发布', sortOrder: 'asc' },
-        'updateDate-desc': { sortField: 'updateDate', label: '最近修改', sortOrder: 'desc' },
-        'updateDate-asc': { sortField: 'updateDate', label: '最早修改', sortOrder: 'asc' },
-        'views-desc': { sortField: 'views', label: '浏览量', sortOrder: 'desc' },
-        'likes-desc': { sortField: 'likes', label: '点赞数', sortOrder: 'desc' },
-        'comments-desc': { sortField: 'comments', label: '评论数', sortOrder: 'desc' }
-    };
-    const option = ref(options['postDate-desc']);
+    const options  = [
+        { value: 'postDate-desc', label: '最近发布' , sortField: 'postDate', sortOrder: 'desc'},
+        { value: 'postDate-asc', label: '最早发布', sortField: 'postDate', sortOrder: 'asc'},
+        { value: 'updateDate-desc', label: '最近修改', sortField: 'updateDate', sortOrder: 'desc'},
+        { value: 'updateDate-asc', label: '最早修改', sortField: 'updateDate', sortOrder: 'asc'},
+        { value: 'views-desc', label: '浏览量', sortField: 'views', sortOrder: 'desc'},
+        { value: 'likes-desc', label: '点赞数', sortField: 'likes', sortOrder: 'desc'},
+        { value: 'comments-desc', label: '评论数', sortField: 'comments', sortOrder: 'desc'}
+    ];
+
+    const option = ref('postDate-desc');
+
+    const targetOption = ref(options[0]);
+
+    const statusOptions = ref([
+      { value: '', label: '全部状态' },
+      { value: 'publish', label: '已发布' },
+      { value: 'draft', label: '草稿' },
+      { value: 'trash', label: '垃圾' },
+      { value: 'private', label: '私密' }
+    ]);
 
     // 计算每个 article 的显示内容
     const getDisplayTime = (article) => {
         const isPublish = article.status === 'publish';
-        const isScheduled = formatDate(new Date()) < article.postDate;
+        const isScheduled = formatDate(new Date()) < formatDate(article.postDate);
 
-        if (option.value.sortField === 'updateDate') {
+        if (targetOption.value && targetOption.value.sortField === 'updateDate') {
             return { label: '最后修改', date: formatDate(article.updateDate) };
         }
-        
+
         if (isPublish) {
             return isScheduled
                 ? { label: '定时发布', date: formatDate(article.postDate) }
                 : { label: '已发布', date: formatDate(article.postDate) };
         } else {
             return { label: '最后修改', date: formatDate(article.updateDate) };
-        } 
+        }
     };
 
     // 格式化日期
@@ -195,7 +208,7 @@
     function formatPostStatus(article) {
         // 定义前端字段和数据库列名的映射关系
         const fieldMapping = new Map();
-        if (formatDate(new Date()) < article.postDate) {
+        if (formatDate(new Date()) < formatDate(article.postDate)) {
             fieldMapping.set('publish', '定时发布');
         } else {
             fieldMapping.set('publish', '已发布');
@@ -230,16 +243,17 @@
         }
         if (route.query.sort) {
             let orderString = `${route.query.sort}` + '-' + `${route.query.order}`;
-            option.value = options[orderString];
+            targetOption.value = options.find(item => item.value === orderString);
         }
+
         // 获取文章列表
         try {
             const response = await axios.get('http://localhost:8080/admin/articles', {
                 params: {
                     page: currentPage.value,
                     limit: RecordPerPage.value,
-                    sort: option.value.sortField,
-                    order: option.value.sortOrder,
+                    sort: targetOption.value.sortField,
+                    order: targetOption.value.sortOrder,
                     category: category.value,
                     status: status.value,
                     keywords: searchKeywords.value
@@ -263,7 +277,13 @@
                 taxonomy: 'category'
             }
         }).then(response => {
-            categories.value = response.data.content;
+            categories.value.push({'value':'', label:'所有分类'});
+            const newItems = response.data.content.map(item => ({
+                value: item.name,
+                label: item.name,
+                id: item.archiveId
+            }));
+            categories.value.push(...newItems);
             category.value = '';
         }).catch(error => {
             console.error('请求分类存档列表失败:', error);
@@ -282,8 +302,9 @@
             queryParams.value.category = category.value;
         }
         if (option.value) {
-            queryParams.value.sort = option.value.sortField;
-            queryParams.value.order = option.value.sortOrder;
+            targetOption.value = options.find(item => item.value === option.value);
+            queryParams.value.sort = targetOption.value.sortField;
+            queryParams.value.order = targetOption.value.sortOrder;
         }
         if (searchKeywords.value) {
             let keywords = searchKeywords.value.split(/\s+/).filter(keyword => keyword);
@@ -336,6 +357,22 @@
         .then(response => {
             articleContent = response.data.content;
         });
+
+        // 保存文章标签
+        let temptags = article.tags;
+        article.tags = [];
+        for (const tag of temptags) {
+            try {
+                const response = await axios.post('http://localhost:8080/admin/archives', {
+                    name: tag.name,
+                    taxonomy: 'post_tag'
+                });
+                article.tags.push(response.data);
+                console.log(`Tag "${tag}" saved successfully.`);
+            } catch (error) {
+                console.error(`保存标签 "${tag}" 失败:`, error);
+            }
+        }
 
         await axios.put('http://localhost:8080/admin/articles', {
             articleId: article.articleId,
@@ -417,8 +454,9 @@
     /* width: 80%; */
     margin: 20px auto;
     padding: 20px;
-    background-color: #fff;
+    background-color: #f9f9f9;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    font-family: 'M';
 }
 
 h1 {
@@ -428,15 +466,18 @@ h1 {
 
 .filters {
     margin-bottom: 20px;
+    display: flex; 
+    flex-direction: row; 
+    align-items: center; 
+    gap: 30px;
 }
 
-.filters label {
-    margin-right: 10px;
-}
-
-.filters select {
-    padding: 5px;
-    margin-right: 20px;
+.filters .search-bar {
+    display: inline-flex;
+    border: 1px solid #ccc; 
+    padding: 9px 10px; 
+    border-radius: 4px;
+    background-color: #fff;
 }
 
 button {
@@ -446,6 +487,7 @@ button {
     color: white;
     border: none;
     cursor: pointer;
+    border-radius: 4px;
 }
 
 span {
@@ -485,8 +527,12 @@ th span {
     font-size: 18px;
 }
 
-input {
-width: calc(200px);
+.search-input {
+    padding: 5px, 5px; 
+    margin-right: 8px; 
+    border: none; 
+    outline: none;
+    width: calc(200px);
 }
 
 .pagination {
