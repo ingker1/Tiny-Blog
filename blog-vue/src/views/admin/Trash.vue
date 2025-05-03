@@ -1,5 +1,5 @@
 <template>
-    <h1>废纸篓</h1>
+    <h2>废纸篓</h2>
     <div class="container">
         <!-- 文章列表 -->
         <table>
@@ -17,7 +17,8 @@
             <tbody>
                 <!-- 使用一个数组来动态插入编辑行 -->
                 <template v-for="(article, index) in articles" :key="article.postDate">
-                    <tr v-if="editingArticleIndex !== index">
+                    <tr v-if="editingArticleIndex !== index"
+                        :class="index % 2 === 0 ? 'odd-row':'even-row'">
                         <td>{{ article.title }}
                             <p>摘要：{{ article.summary.substring(0, 100) }}</p>
                         </td>
@@ -37,14 +38,14 @@
         </table>
 
         <!-- 分页组件 -->
-        <div style="margin: 10px; text-align: right;">
+        <div class="paging-bar">
             <button @click="changePage(currentPage - 1)" :disabled="currentPage === 1">上一页</button>
             <span> {{ currentPage }} / {{ totalPages }} 页</span>
             <button @click="changePage(currentPage + 1)" :disabled="currentPage === totalPages">下一页</button>
 
             <!-- 跳转到指定页码的输入框 -->
-            <input type="number" v-model="pageInput" :min="1" :max="totalPages" style="width:40px;" />
-            <span>页</span>
+            <input type="number" v-model="pageInput" :min="1" :max="totalPages" style="width:40px; font-size: 18px;" @keyup.enter="changePage(pageInput)"/>
+            &nbsp;&nbsp;<span>页</span>
             <button @click="changePage(pageInput)">跳转</button>
 
             <!-- 每页条数选择 -->
@@ -55,7 +56,7 @@
                 <option :value="50">50</option>
                 <option :value="100">100</option>
             </select>
-            <span>条/页</span>
+            &nbsp;&nbsp;<span>条/页</span>
         </div>
     </div>
 </template>
@@ -176,6 +177,7 @@
                 status: 'draft',
                 likes: article.likes,
                 views: article.views,
+                comments: article.comments,
                 category: article.category,
                 tags: article.tags
             })
@@ -234,7 +236,7 @@
             currentPage.value = page;       
             // 更新路由的 page 参数
             queryParams.value.page = page;
-            router.push({ path: '/admin/posts', query: queryParams.value });
+            router.push({ path: '/admin/trash', query: queryParams.value });
             loadArticles(); 
         } else {
             alert('页码无效');
@@ -264,6 +266,7 @@
     padding: 20px;
     background-color: #fff;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    font-family: 'M';
 }
 
 h1 {
@@ -397,6 +400,20 @@ tbody tr:hover button {
     white-space: nowrap; /* 避免换行 */
 }
 
+.even-row {
+    background-color: #f9f9f9;
+}
 
+.odd-row {
+    background-color: #f3f3f3;
+}
+
+.paging-bar {
+    align-items: center;
+    display: flex; 
+    justify-content: flex-end;
+    font-size: 16px;
+    font-family: "M";
+}
 
 </style>
