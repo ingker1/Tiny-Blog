@@ -18,7 +18,7 @@ onMounted(() => {
         height: '80vh',
         width: '60vw',
         mode: 'wysiwyg', //编辑模式设置为即时渲染
-        //cdn: '/vditor', // 设置为本地CDN
+        cdn: 'http://localhost:8081/vditor', // 设置为本地CDN
         icon: 'material',
         after() {
             isReady.value = true; 
@@ -40,6 +40,10 @@ onMounted(() => {
                 lineNumber: true, // 显示行号
             } 
         },
+        outline: {
+          enable: true,
+          position: 'right'
+        }
     });
 });
 
