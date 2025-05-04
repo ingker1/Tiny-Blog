@@ -13,7 +13,7 @@
 
         <CustomSelect
         v-model="category"
-        :options="categories"
+        :options="categorySelectItmes"
         placeholder="Select an option"
         :searchable="true"
         @change="applyFilters()"
@@ -36,7 +36,11 @@
                 </svg>
             </div>
         </div>
-        
+
+        <div style="gap: 10px !important; display: flex; height: 40px;">
+            <button  class="delete" v-show="selectedArticles.length > 0" v-on:click="batchDelete">移到废纸篓</button>
+            <button v-show="selectedArticles.length > 0" v-on:click="batchEdit">编辑文章</button>
+        </div>
 
         <!-- 分页组件 -->
         <div class="paging-bar" style="margin-left: auto;">
@@ -66,6 +70,7 @@
         <table>
             <thead>
                 <tr>
+                <th><input type="checkbox" class="1" v-model="selectAll" @change="toggleSelectAll"></th>
                 <th style="width: 40%;">文章标题</th>
                 <th style="width: 10%;">分类</th>
                 <th style="width: 20%;">标签</th>
@@ -77,22 +82,73 @@
 
             <tbody>
                 <template v-for="(article, index) in articles" :key="article.articleId">
+                    <tr v-if="index === 0 && batchShow" class="even-row">
+                        <td></td>
+                        <td>
+                            批量编辑栏
+                            <div style="margin-bottom: 10px;" v-for="a in selectedArticles" :key="a.articleId">
+                                <span class="delete-icon" @click="removeArticle(a.articleId)"></span>
+                                {{ a.title }}
+                            </div>
+                            <button @click="batchSave(selectedArticles)">更新文章</button>
+                            <button @click="batchShow = false">取消编辑</button>
+                        </td>
+                        <td>
+                            <select v-model="categoryMultipleBar">
+                            <option 
+                                v-for="item in categorySelectItmes.slice(1)" 
+                                :key="item.value" 
+                                :value="item"
+                            >
+                                {{ item.label }}
+                            </option>
+                        </select>
+                        </td>
+                        <td style="vertical-align: top;">
+                            <div style=" display: flex;flex-direction: column;justify-content: flex-start;">
+                                <div class="content" style="flex-wrap: nowrap; display: flex;">
+                                    <input v-model="tagText" type="text">
+                                    <button @click="addTags" style="width: 50px;height: 37px; margin-left: 10px;">添加</button>
+                                </div>  
+                            </div>
+
+                            <div style=" display: flex;flex-direction: column;justify-content: flex-start;">
+                                <ul class="content" style="padding: 0;">
+                                    <li class="text-with-icon" v-for="(tag, index) in tagsMultipleBar" :key="index">{{ tag.name }} 
+                                        <span class="delete-icon" @click="removeTag(index)"></span>
+                                    </li>      
+                                </ul>
+                            </div>
+                        </td>
+                        <td colspan="3" style="vertical-align: top;">
+                            设置文章合集
+                        </td>
+                        <td></td>
+                    </tr>
+                    
                     <tr v-if="editingArticleIndex !== index"
                         :class="index % 2 === 0 ? 'odd-row':'even-row'">
+                        <td>
+                            <input type="checkbox"
+                            :value="article"
+                            v-model="selectedArticles"
+                            @change="checkSelectAll"
+                            >
+                        </td>
                         <td>{{ article.title }}
                             <p>摘要：{{ article.summary.substring(0, 100) }}</p>
                             <div class="quickbutton">
                                 <button @click="editArticle(article)">编辑</button>
                                 <button @click="quickEdit(index)">快速编辑</button>
                                 <button @click="viewBlog(article.articleId)">查看文章</button>
-                                <button v-if="article.status !== 'trash'" @click="recycleArticle(article)" class="delete">移到废纸篓</button>
+                                <button v-if="article.status !== 'trash'" @click="recycleArticle([article])" class="delete">移到废纸篓</button>
                             </div>
                         </td>
                         <td>{{ article.category ? article.category.name : '' }}</td>
                         <td>{{ article.tags ? article.tags.map(tag => tag.name).join('、') : '' }}</td>
                         <td>{{ formatPostStatus(article) }}</td>
                         <td>
-                            {{ getDisplayTime(article).label }}<br>
+                            {{ getDisplayTime(article).name }}<br>
                             {{ getDisplayTime(article).date }}<br>
                         </td>
                         <td>
@@ -105,6 +161,7 @@
                     <!-- 动态插入编辑表单 -->
                     <tr v-if="editingArticleIndex === index"
                         :class="index % 2 === 0 ? 'odd-row':'even-row'">
+                        <td></td>
                         <td :colspan="6">
                             文章标题：<input v-model="article.title" type="text" style="width: 400px; height: 32px; font-size: 18px;">
                             <QuickEdit
@@ -115,7 +172,7 @@
                             v-model:tags="article.tags"
                             />
                             <button @click="updateButton(article)">修改</button>
-                            <button @click="editingArticleIndex = null">取消</button>
+                            <button @click="cancelQuickEdit()">取消</button>
                         </td>
                     </tr>
                     
@@ -148,7 +205,7 @@
 </template>
 
 <script setup>
-    import { ref, onMounted } from 'vue';
+    import { ref, onMounted, watch } from 'vue';
     import { useRoute, useRouter } from 'vue-router'; // 导入useRouter来进行路由跳转
     import axios from 'axios';
     import QuickEdit from '@/components/QuickEdit.vue';
@@ -171,6 +228,8 @@
     const category = ref(null);        	// 文章分类
 
     const editingArticleIndex = ref(null); // 当前正在编辑的文章的索引
+
+    const categorySelectItmes = ref([]);         // 文章分类下拉框列表
 
     // 定义排序选项
     const options  = [
@@ -201,15 +260,15 @@
         const isScheduled = formatDate(new Date()) < formatDate(article.postDate);
 
         if (targetOption.value && targetOption.value.sortField === 'updateDate') {
-            return { label: '最后修改', date: formatDate(article.updateDate) };
+            return { name: '最后修改', date: formatDate(article.updateDate) };
         }
 
         if (isPublish) {
             return isScheduled
-                ? { label: '定时发布', date: formatDate(article.postDate) }
-                : { label: '已发布', date: formatDate(article.postDate) };
+                ? { name: '定时发布', date: formatDate(article.postDate) }
+                : { name: '已发布', date: formatDate(article.postDate) };
         } else {
-            return { label: '最后修改', date: formatDate(article.updateDate) };
+            return { name: '最后修改', date: formatDate(article.updateDate) };
         }
     };
 
@@ -300,14 +359,16 @@
                 taxonomy: 'category'
             }
         }).then(response => {
-            categories.value.push({'value':'', label:'所有分类'});
+            categorySelectItmes.value.push({'value':'', label:'所有分类'});
             const newItems = response.data.content.map(item => ({
                 value: item.name,
                 label: item.name,
                 id: item.archiveId
             }));
-            categories.value.push(...newItems);
+            categorySelectItmes.value.push(...newItems);
+
             category.value = '';
+            categories.value = response.data.content;
         }).catch(error => {
             console.error('请求分类存档列表失败:', error);
         });
@@ -418,46 +479,52 @@
         await loadArticles();  // 刷新文章数据
     };
 
-    const recycleArticle = async (article) => {
+    const recycleArticle = async (articles) => {
         try {
-            let articleContent = '';
-            await axios.get(`http://localhost:8080/articles/${article.articleId}`)
-            .then(response => {
-                articleContent = response.data.content;
-            })
-            .catch(error => {
-                console.error(error);
-            });
+            for (const article of articles) {
+                let articleContent = '';
+                await axios.get(`http://localhost:8080/articles/${article.articleId}`)
+                .then(response => {
+                    articleContent = response.data.content;
+                })
+                .catch(error => {
+                    console.error(error);
+                });
 
-            await axios.put('http://localhost:8080/admin/articles', {
-                articleId: article.articleId,
-                title: article.title,
-                content: articleContent,
-                postDate: article.postDate,
-                updateDate: article.updateDate,
-                status: 'trash',
-                likes: article.likes,
-                views: article.views,
-                comments: article.comments,
-                category: article.category,
-                tags: article.tags
-            })
-            .catch(error => {
-                console.error(error);
-            });
+                await axios.put('http://localhost:8080/admin/articles', {
+                    articleId: article.articleId,
+                    title: article.title,
+                    content: articleContent,
+                    postDate: article.postDate,
+                    updateDate: article.updateDate,
+                    status: 'trash',
+                    likes: article.likes,
+                    views: article.views,
+                    comments: article.comments,
+                    category: article.category,
+                    tags: article.tags
+                })
+                .catch(error => {
+                    console.error(error);
+                });
 
-            await axios.put(`http://localhost:8080/admin/comments/trash/${article.articleId}`)
-            .catch(error => {
-                console.error(error);
-            });
+                await axios.put(`http://localhost:8080/admin/comments/trash/${article.articleId}`)
+                .catch(error => {
+                    console.error(error);
+                });
+            }
 
             alert('已移至废纸篓');
             loadArticles(); // 刷新文章列表
         } catch (error) {
             console.error("文章回收出错", error);
-        }
-        
+        } 
     };
+
+    function cancelQuickEdit() {
+        editingArticleIndex.value = null;
+        loadArticles();
+    }
 
     // 页面加载时请求文章数据，并设置页面标题
     onMounted(async () => {
@@ -468,6 +535,132 @@
         await loadCategory();
         await loadArticles();
     }); 
+
+
+    // 勾选的文章数组
+    const selectedArticles = ref([]);
+
+    // 全选状态
+    const selectAll = ref(false);
+
+    const batchShow = ref(false);
+
+    // 全选/取消全选方法
+    function toggleSelectAll() {
+        if (selectAll.value) {
+            selectedArticles.value = [...articles.value];
+        } else {
+            selectedArticles.value = [];
+        }
+        console.log(selectedArticles.value);
+    }
+
+    // 单选时，判断是否该勾上全选框
+    function checkSelectAll() {
+        selectAll.value = selectedArticles.value.length === articles.value.length;
+        console.log(selectedArticles.value);
+    }
+
+    // 批量操作示例方法
+    function batchDelete() {
+        recycleArticle(selectedArticles.value);
+    }
+
+    function removeArticle(articleId) {
+        const idx = selectedArticles.value.findIndex(item => item.articleId === articleId);
+        if (idx !== -1) {
+            selectedArticles.value.splice(idx, 1);
+        }
+    }
+
+    function batchEdit() {
+        batchShow.value = true;
+    }
+
+    // 如果 articles 列表变动，重置全选状态
+    watch(articles, () => {
+        selectedArticles.value = [];
+        selectAll.value = false;
+    });
+
+    const categoryMultipleBar = ref(null)  // 多选编辑的分类
+    const tagText = ref('');             // 多选编辑的标签输入框的文本
+    const tagsMultipleBar = ref([]);     // 多选编辑的标签项
+
+    function addTags() {
+        if (tagText.value) {
+            const newTag = {
+                archiveId: null,
+                taxonomy: 'post_tag',
+                name: tagText.value
+            };
+
+            tagsMultipleBar.value.push(newTag);
+            tagText.value = '';
+        }
+        console.log(tagsMultipleBar.value);
+    }
+
+    function removeTag(index) {
+        tagsMultipleBar.value.splice(index, 1); // 删除指定位置的标签
+        console.log(tagsMultipleBar.value);
+    }
+
+    async function batchSave(articles) {
+        try {
+            for (const article of articles) {
+                let articleContent = '';
+                await axios.get(`http://localhost:8080/articles/${article.articleId}`)
+                .then(response => {
+                    articleContent = response.data.content;
+                });
+
+                let categoryItem = {
+                    archiveId: categoryMultipleBar.value.id,
+                    name: categoryMultipleBar.value.value,
+                    taxonomy: 'category'
+                };
+
+                article.tags = [];
+                for (const tag of tagsMultipleBar.value) {
+                    try {
+                        const response = await axios.post('http://localhost:8080/admin/archives', {
+                            name: tag.name,
+                            taxonomy: 'post_tag'
+                        });
+                        article.tags.push(response.data);
+                        console.log(`Tag "${tag}" saved successfully.`);
+                    } catch (error) {
+                        console.error(`保存标签 "${tag}" 失败:`, error);
+                    }
+                }
+
+                await axios.put('http://localhost:8080/admin/articles', {
+                    articleId: article.articleId,
+                    title: article.title,
+                    content: articleContent,
+                    postDate: article.postDate,
+                    updateDate: new Date(),
+                    status: article.status,
+                    likes: article.likes,
+                    views: article.views,
+                    comments: article.comments,
+                    category: categoryItem,
+                    tags: article.tags
+                })
+                .catch (error => {
+                    console.error("修改文章错误", error);
+                });
+            }
+
+            batchShow.value = false;  // 关闭快捷编辑框
+            await loadArticles();  // 刷新文章数据
+            tagsMultipleBar.value = [];
+            categoryMultipleBar.value = null;
+        } catch (error) {
+            console.error("文章批量编辑出错", error);
+        }
+    }
 
 </script>
 
@@ -642,5 +835,42 @@ select:focus {
 ::v-deep .quickEdit .editItem .content input {
     height: 32px;
     font-size: 16px;
+}
+
+.delete-icon {
+    width: 18px;
+    height: 18px;
+    background-color: #007BFF;
+    border-radius: 50%;
+    position: relative;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    display: inline-block;
+    vertical-align: text-bottom;
+    margin-left: 3px;
+}
+
+.delete-icon::before,
+.delete-icon::after {
+    content: '';
+    position: absolute;
+    background-color: white;
+    width: 10px;
+    height: 2px;
+    top: 50%;
+    left: 50%;
+    transform-origin: center;
+}
+
+.delete-icon::before {
+    transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.delete-icon::after {
+    transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+.delete-icon:hover {
+    background-color: #FF4136;
 }
 </style>
