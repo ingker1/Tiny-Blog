@@ -1,44 +1,48 @@
 <template>
-    <h1>分类管理</h1>
+    <h2>归档管理</h2>
 
     <div class="filters" style="margin-bottom: 10px;">
-        <label for="taxonomy">分类方法：</label>
+        <label for="taxonomy">归档方法：</label>
         <select v-model="taxonomy" id="taxonomy" @change="applyFilters">
             <option value="category">分类</option>
             <option value="post_tag">标签</option>
         </select>
         
-        <button @click="ShowDialog()">新增文章分类</button>
+        <button @click="ShowDialog()">新增归档</button>
     </div>
 
     <div class="container">
         <table>
             <thead>
                 <tr>
-                <th @click="reveseSortByField('name')">分类名<span :class="getArrowClass('name')"></span></th>
+                <th @click="reveseSortByField('name')">归档名<span :class="getArrowClass('name')"></span></th>
                 <th @click="reveseSortByField('count')">总数<span :class="getArrowClass('count')"></span></th>
                 </tr>
             </thead>
             <tbody>
-                <tr v-for="archive in archives" :key="archive.name">
-                <td>{{ archive.name }}
-                    <br/>
-                    <button @click="ShowDialog(Object.fromEntries(Object.entries(archive).slice(0, 3)))">编辑</button>
-                    <button class="delete" @click="deleteArchive(archive.archiveId)">删除</button>
-                </td>
-                <td>{{ archive.count }}</td>
-                </tr>
+                <template v-for="(archive, index) in archives" :key="archive.name">
+                    <tr v-if="editingArticleIndex !== index"
+                        :class="index % 2 === 0 ? 'odd-row':'even-row'">
+                    <td>{{ archive.name }}
+                        <br/>
+                        <button @click="ShowDialog(Object.fromEntries(Object.entries(archive).slice(0, 3)))">编辑</button>
+                        <button class="delete" @click="deleteArchive(archive.archiveId)">删除</button>
+                    </td>
+                    <td>{{ archive.count }}</td>
+                    </tr>
+                </template>
             </tbody>
         </table>
 
         <!-- 编辑对话框 -->
         <div v-if="isShowDialog" class="dialog-overlay">
             <div class="dialog">
-                <h3>编辑分类</h3>
-                <label>分类名：</label>
+                <h3 v-if="isAddNew">添加归档</h3>
+                <h3 v-else>编辑归档</h3>
+                <label>归档名：</label>
                 <input v-model="currentArchive.name" type="text" class="input"/>
                 <div v-if="isAddNew">
-                    <label for="taxonomy">分类方法：</label>
+                    <label for="taxonomy">归档方法：</label>
                     <select v-model="taxonomy" id="taxonomy" @change="applyFilters">
                         <option value="category">分类</option>
                         <option value="post_tag">标签</option>
@@ -56,14 +60,14 @@
         </div>
 
         <!-- 分页组件 -->
-        <div style="margin: 10px; text-align: right;">
+        <div class="paging-bar">
             <button @click="changePage(currentPage - 1)" :disabled="currentPage === 1">上一页</button>
             <span> {{ currentPage }} / {{ totalPages }} 页</span>
             <button @click="changePage(currentPage + 1)" :disabled="currentPage === totalPages">下一页</button>
 
             <!-- 跳转到指定页码的输入框 -->
-            <input type="number" v-model="pageInput" :min="1" :max="totalPages" style="width:40px;" />
-            <span>页</span>
+            <input type="number" v-model="pageInput" :min="1" :max="totalPages" style="width:40px; font-size: 18px;" @keyup.enter="changePage(pageInput)"/>
+            &nbsp;&nbsp;<span>页</span>
             <button @click="changePage(pageInput)">跳转</button>
 
             <!-- 每页条数选择 -->
@@ -74,7 +78,7 @@
                 <option :value="50">50</option>
                 <option :value="100">100</option>
             </select>
-            <span>条/页</span>
+            &nbsp;&nbsp;<span>条/页</span>
         </div>
     </div>
 </template>
@@ -232,6 +236,7 @@
     padding: 20px;
     background-color: #fff;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    font-family: 'M';
 }
 
 .filters {
@@ -274,7 +279,7 @@ tbody tr:hover button {
 
 button {
     padding: 5px 10px;
-    margin-right: 10px;
+	margin-right: 10px;
     background-color: #007bff;
     color: white;
     border: none;
@@ -337,5 +342,24 @@ button:hover {
     margin-top: 5px;
 }
 
+.even-row {
+    background-color: #f9f9f9;
+}
+
+.odd-row {
+    background-color: #f3f3f3;
+}
+
+.paging-bar {
+    align-items: center;
+    display: flex; 
+    justify-content: flex-end;
+    font-size: 16px;
+    font-family: "M";
+}
+
+span {
+    margin-right: 10px;
+}
 </style>
   
