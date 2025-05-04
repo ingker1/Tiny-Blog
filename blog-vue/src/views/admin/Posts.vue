@@ -36,6 +36,29 @@
                 </svg>
             </div>
         </div>
+        
+
+        <!-- 分页组件 -->
+        <div class="paging-bar" style="margin-left: auto;">
+            <button @click="changePage(currentPage - 1)" :disabled="currentPage === 1">上一页</button>
+            <span> {{ currentPage }} / {{ totalPages }} 页</span>
+            <button @click="changePage(currentPage + 1)" :disabled="currentPage === totalPages">下一页</button>
+
+            <!-- 跳转到指定页码的输入框 -->
+            <input type="number" v-model="pageInput" :min="1" :max="totalPages" style="width:40px; font-size: 18px;" @keyup.enter="changePage(pageInput)"/>
+            &nbsp;&nbsp;<span>页</span>
+            <button @click="changePage(pageInput)">跳转</button>
+
+            <!-- 每页条数选择 -->
+            <select v-model="RecordPerPage" @change="changePage(1)">
+                <option :value="10">10</option>
+                <option :value="15">15</option>
+                <option :value="25">25</option>
+                <option :value="50">50</option>
+                <option :value="100">100</option>
+            </select>
+            &nbsp;&nbsp;<span>条/页</span>
+        </div>
     </div>
     
     <div class="container">
@@ -573,11 +596,51 @@ tbody tr:hover button {
     gap: 5px;
 }
 
-::v-deep .quickEdit .editItem .content {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    white-space: nowrap; /* 避免换行 */
+.even-row {
+    background-color: #f9f9f9;
 }
 
+.odd-row {
+    background-color: #f3f3f3;
+}
+
+select {
+    padding: 10px 16px;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px; /* 超圆润，像 pill 一样 */
+    background-color: #f9f9f9;
+    font-size: 14px;
+    color: #333;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg width='14' height='8' viewBox='0 0 14 8' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l6 6 6-6' stroke='%23999' stroke-width='2' fill='none' fill-rule='evenodd'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 6px center;
+    background-size: 14px 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    outline: none;
+}
+
+select:hover {
+    background-color: #f0f0f0;
+}
+
+select:focus {
+    border-color: #007bff;
+    background-color: #fff;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='8' viewBox='0 0 14 8'%3E%3Cpath d='M1 7l6-6 6 6' stroke='%23999' stroke-width='2' fill='none'/%3E%3C/svg%3E");
+}
+
+.paging-bar {
+    align-items: center;
+    display: flex; 
+    justify-content: flex-end;
+    font-size: 16px;
+    font-family: "M";
+}
+
+::v-deep .quickEdit .editItem .content input {
+    height: 32px;
+    font-size: 16px;
+}
 </style>
