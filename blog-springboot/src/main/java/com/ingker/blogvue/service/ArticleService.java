@@ -157,7 +157,6 @@ public class ArticleService {
     public void add(ArticleDTO articleDTO) {
         validateNonEmptyArticleDTO(articleDTO);
         validateNonEmptyString(articleDTO.getArticle().getArticleTitle(), "文章标题");
-        validateNonEmptyString(articleDTO.getArticle().getArticleContent(), "文章内容");
 
         try {
             articleMapper.add(articleDTO.getArticle());
@@ -190,7 +189,6 @@ public class ArticleService {
         getExistingArticle(articleDTO.getArticle().getArticleId());
 
         validateNonEmptyString(articleDTO.getArticle().getArticleTitle(), "文章标题");
-        validateNonEmptyString(articleDTO.getArticle().getArticleContent(), "文章内容");
 
         try {
             articleMapper.update(articleDTO.getArticle());
@@ -281,7 +279,7 @@ public class ArticleService {
         }
 
         for (Archive tag : articleDTO.getTags()) {
-            validatePositiveInteger(tag.getArchiveId(), "标签ID");
+            //validatePositiveInteger(tag.getArchiveId(), "标签ID");
             archiveRelationshipMapper.add(tag.getArchiveId(), articleId);
         }
     }
