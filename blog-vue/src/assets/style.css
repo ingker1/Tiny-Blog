@@ -1,2 +1,50 @@
+.post h1 {
+    font-size: 34px;
+    font-weight: 500;
+    font-family: "楷体";
+}
 
+.post h2 {
+    font-size: 28px;
+    font-weight: 500;
+    font-family: "楷体";
+}
 
+.post h3 {
+    font-size: 26px;
+    font-weight: 500;
+    font-family: "楷体";
+}
+
+/* .post {
+    position: relative;
+    transform: translateX(-50%);
+    left: 50%;
+    width: 60vw;
+    font-family: 'Microsoft Yahei';
+    font-size: 18px;
+    line-height: 1.8em;
+    padding: 0% 5%;
+    border: 2px solid #ccc;
+} */
+
+/* .container {
+    background:#f5f5f5; 
+    padding: 20px;
+    margin: -8px;
+} */
+
+.post .post-content img {
+    position: relative;
+    transform: translateX(-50%);
+    left: 50%;
+    display: block;            /* 让图片成为独立块元素，防止与文字并排 */
+    margin: 1em;               /* 垂直方向留空，水平方向居中 */
+    max-width: 100%;           /* 避免超出容器宽度 */
+    height: auto;              /* 保持图片纵横比 */
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.1); /* 可选：让图片更美观 */
+}
+
+pre[class*="language-"] {
+    font-size: 16px !important;
+}

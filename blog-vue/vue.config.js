@@ -7,6 +7,9 @@ module.exports = defineConfig({
         https: false,      // 如果需要使用 https，则设置为 true
         headers: {
             'Access-Control-Allow-Origin': '*' // 允许所有域访问
+        },
+        client: {
+            overlay: false // 编译错误时，取消全屏覆盖（建议关掉）
         }
     },
     // 配置生产环境中的 Source Maps
