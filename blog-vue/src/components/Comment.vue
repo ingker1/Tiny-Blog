@@ -1,28 +1,28 @@
 <template>
-    <div name="comment">
+    <div name="comment" class="comment">
         <h2>文章评论</h2>
 
         <!-- 评论列表 -->
         <div v-if="comments.length > 0">
             <div v-for="(comment, index) in comments" :key="comment.publishDate" class="comment-item" :id="'comment-' + comment.floor">
-                <span :id="'comment-floor-' + comment.floor">#{{ index + 1 }}楼</span>
-                <p>
-                    <strong>{{ comment.anonymousStatus === 0 ? comment.author : '匿名' }}</strong>
-                    发表于 {{ formatDate(comment.publishDate) }}
-                </p>
+                <span :id="'comment-floor-' + comment.floor">#{{ index + 1 }}楼 </span>
+                <strong>{{ comment.anonymousStatus === 0 ? comment.author : '匿名' }}</strong>
+                发表于 {{ formatDate(comment.publishDate) }}
                 <p>{{ comment.content }}</p>
 
                 <!-- 回复按钮 -->
-                <button @click="startReply(comment)">回复</button>
-
+                <button class="reply-botton" @click="startReply(comment)">回复</button>
+                <p v-if="comment.children.length > 0">{{ comment.children.length }}条回复
+                    <button @click="toggleExpand(comment)" class="toggle-btn">
+                        {{ comment.expanded ? '收起 ▲' : '展开回复 ▼' }}
+                    </button>
+                </p>
                 <!-- 如果有子评论，递归渲染 -->
-                <div v-if="comment.children.length > 0" class="children-comments">
+                <div v-if="comment.children.length > 0" class="children-comments" v-show="comment.expanded">
                     <div v-for="(child, childIndex) in comment.children" :key="child.publishDate" class="comment-item child-comment" :id="'comment-' + child.floor">
-                        <span :id="'comment-floor-' + child.floor">#{{ index + 1 }}楼-{{ childIndex + 1 }}层</span>
-                        <p>
-                            <strong>{{ child.anonymousStatus === 0 ? child.author : '匿名' }}</strong>
-                            发表于 {{ formatDate(child.publishDate) }}
-                        </p>  
+                        <span :id="'comment-floor-' + child.floor">#{{ index + 1 }}楼-{{ childIndex + 1 }}</span>
+                        <strong>{{ child.anonymousStatus === 0 ? child.author : '匿名' }}</strong>
+                        发表于 {{ formatDate(child.publishDate) }}
                         <p>
                             回复给<strong>{{' ' + findCommentById(comments, child.parentId).author + ' ' }}</strong>
                             <span class="floor-number" :id="'reply-target-' + child.floor" @click="scrollToComment(child.parentId)">
@@ -32,7 +32,7 @@
                         <p>{{ child.content }}</p>
 
                         <!-- 回复按钮 -->
-                        <button @click="startReply(child)">回复</button>
+                        <button class="reply-botton" @click="startReply(child)">回复</button>
                     </div>
                 </div>
             </div>
@@ -43,13 +43,12 @@
         <div class="add-comment">
             <textarea v-model="newComment" placeholder="写下你的评论..." rows="3"></textarea>
             <input v-model="username" placeholder="用户名 (可选，不填则匿名评论)" />
+            <!-- 如果正在回复，则显示取消按钮 -->
+            <button style="background-color: red !important;" :style="{ visibility: isReplying ? 'visible' : 'hidden' }" @click="cancelReply">取消回复</button>
             <button @click="submitComment" :disabled="isSubmitting">
                 {{ isSubmitting ? "提交中..." : "提交评论" }}
             </button>
-            <!-- 如果正在回复，则显示取消按钮 -->
-            <button v-if="isReplying" @click="cancelReply">取消回复</button>
         </div>
-
         <!-- 提示信息 -->
         <p v-if="message" :class="{ success: isSuccess, error: !isSuccess }">{{ message }}</p>
     </div>
@@ -82,6 +81,8 @@
         return commentsList.map((comment) => {
             floor += 1;
             comment.floor = floor;
+
+            comment.expanded = false;
 
             if (comment.children && comment.children.length > 0) {
                 comment.children = setCommentFloors(comment.children);
@@ -209,6 +210,10 @@
         });
     };
 
+    const toggleExpand = (comment) => {
+        comment.expanded = !comment.expanded;
+    };
+
     onMounted(() => {
         loadComments().then(() => {
             nextTick(() => {
@@ -226,9 +231,19 @@
 
 
 <style scoped>
+.comment {
+    margin: 50px 0px;
+    padding: 1% 2%;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #ffffffa7;
+}
+
 .comment-item {
     border-bottom: 1px solid #ddd;
     padding: 10px 0;
+    font-size: 16px;
+    line-height: 1.2em;
 }
 
 .comment-item p {
@@ -237,22 +252,6 @@
 
 .add-comment {
     margin-top: 20px;
-}
-
-textarea {
-    width: 100%;
-    margin-bottom: 10px;
-    padding: 10px;
-}
-
-input {
-    width: calc(100% - 20px);
-    margin-bottom: 10px;
-    padding: 5px 10px;
-}
-
-button {
-    padding: 8px 15px;
 }
 
 .success {
@@ -287,14 +286,16 @@ button {
 }
 
 .add-comment textarea {
-  width: 100%;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
+    width: 60%;
+    min-width: 50%;
+    height: 150px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
 }
 
 .add-comment input {
-  width: 100%;
+  width: 40%;
   padding: 10px;
   margin-top: 10px;
   border: 1px solid #ddd;
@@ -302,13 +303,14 @@ button {
 }
 
 .add-comment button {
-  margin-top: 10px;
-  padding: 10px 15px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
+    margin-left: 20px;
+    margin-top: 10px;
+    padding: 10px 15px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
 }
 
 .add-comment button:disabled {
@@ -319,5 +321,24 @@ button {
     cursor: pointer;
     color: #007bff;
     text-decoration: underline;
+}
+
+.reply-botton {
+    padding: 10px 15px;
+    background-color: #007bffbd;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.toggle-btn {
+    margin-left: 5px;
+    padding: 6px;
+    /* background-color: orange; */
+    color: gray;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
 }
 </style>
