@@ -1,15 +1,32 @@
 <template>
     <div class="login-container">
-        <h2>登录</h2>
+        <h2>欢迎登录</h2>
         <input v-model="username" type="text" placeholder="用户名" v-if="!isLoggedIn" />
         <input v-model="password" type="password" placeholder="密码" v-if="!isLoggedIn" />
-        <button @click="isLoggedIn ? logout() : login()" :disabled="isLoading">
-            {{ isLoggedIn ? '退出登录' : '登录' }}
-        </button>
+
+        <div class="button-group">
+            <button
+                class="login-btn"
+                @click="isLoggedIn ? logout() : login()"
+                :disabled="isLoading"
+            >
+                {{ isLoggedIn ? '退出登录' : '登录' }}
+            </button>
+
+            <button
+                class="register-btn"
+                v-if="!isLoggedIn"
+                @click="goToRegister"
+            >
+                注册
+            </button>
+        </div>
+
         <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
         <p v-if="isLoggedIn" class="user-info">已登录：{{ storedUsername }}</p>
     </div>
 </template>
+
   
 <script setup>
 import { ref, onMounted } from 'vue';
@@ -117,56 +134,87 @@ const logout = async () => {
   
 <style scoped>
 .login-container {
-    width: 300px;
-    padding: 20px;
-    background-color: #fff;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    border-radius: 8px;
+    width: 350px;
+    padding: 30px 25px;
+    background: #f9f9f9;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
     position: absolute;
-    /* 使用绝对定位 */
-    top: 20%;
-    /* 距离屏幕顶部 30% */
+    top: 25%;
     left: 50%;
-    /* 水平居中 */
     transform: translateX(-50%);
-    /* 通过水平偏移 50% 来实现居中 */
     display: flex;
     flex-direction: column;
     align-items: center;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.login-container h2 {
+    margin-bottom: 20px;
+    color: #333;
 }
 
 .login-container input {
     width: 100%;
-    padding: 10px;
-    margin: 10px 0;
-    border: 1px solid #ddd;
-    border-radius: 4px;
+    padding: 12px 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 15px;
+}
+
+.button-group {
+    width: 100%;
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+    justify-content: space-between;
 }
 
 .login-container button {
-    width: 100%;
-    padding: 10px;
-    background-color: #007BFF;
-    color: white;
+    flex: 1;
+    padding: 10px 0;
+    font-size: 15px;
     border: none;
-    border-radius: 4px;
-    font-size: 16px;
+    border-radius: 6px;
     cursor: pointer;
+    transition: background-color 0.3s ease;
 }
 
-.login-container button:disabled {
+.login-btn {
+    background-color: #007BFF;
+    color: white;
+}
+
+.login-btn:hover {
+    background-color: #0056b3;
+}
+
+.login-btn:disabled {
     background-color: #ccc;
+    cursor: not-allowed;
+}
+
+.register-btn {
+    background-color: #6c757d;
+    color: white;
+}
+
+.register-btn:hover {
+    background-color: #5a6268;
 }
 
 .error {
-    color: red;
+    color: #d9534f;
     font-size: 14px;
-    margin-top: 10px;
+    margin-top: 12px;
+    text-align: center;
 }
 
 .user-info {
     font-size: 14px;
     color: green;
-    margin-top: 10px;
-}</style>
+    margin-top: 12px;
+}
+</style>
   
