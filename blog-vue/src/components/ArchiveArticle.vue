@@ -2,7 +2,7 @@
     <div>
         <Header/>
         <div name="articles" class="container">
-            <div v-if="articles.length > 0" class="post">
+            <div v-if="articles.length > 0" class="postlist">
                 <div v-for="article in articles" :key="article.articleId" >
                     <div class="article-item">
                         <h3>
@@ -131,7 +131,20 @@
 
 </script>
 
-<style>
+<style scoped>
+.container {
+    background:#f5f5f5; 
+    padding: 20px;
+    margin: -8px;
+}
+
+.postlist {
+    position: relative;
+    transform: translateX(-50%);
+    left: 50%;
+    width: 60vw;
+}
+
 .article-item {
     border: 1px solid #ccc;
     margin: 10px 0;

@@ -1,4 +1,6 @@
 <template>
+    <Header/>
+
     <div class="container">
         <h2>分类</h2>
         <div class="archive-list">
@@ -50,11 +52,16 @@
             </div>
         </div>
     </div>
+
+    <Footer/>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import axios from 'axios';
+
+import Header from '@/components/Header.vue';
+import Footer from '@/components/Footer.vue';
 
 const Timeline = ref({});
 const categories = ref([]);
@@ -167,6 +174,7 @@ const toggleAll = () => {
     transform: translateX(-50%);
     left: 50%;
     width: 60vw;
+    font-family: 'Microsoft Yahei';
 }
 
 .archive-list {
@@ -181,7 +189,7 @@ const toggleAll = () => {
 
 .archive-item:hover {
     color: #fff;
-    background-color: #369f6c;
+    background-color: #00a2ff;
     text-decoration: none;
 }
 
