@@ -1,40 +1,46 @@
 <template>
     <Header/>
-    <div class="post">
-        <div name="article">
-            <h1>{{article.title}}</h1>
-            <div class="post-meta">{{ article.postDate }}</div>
-            <div v-if="collections.length > 0" class="collection-container">
-                <div  class="collection-title">
-                    合集：{{ collections[0]?.collection }}
-                    <!-- 切换展开/收缩按钮 -->
-                    <button @click="toggleExpand" class="toggle-btn">
-                        {{ isExpanded ? '收起 ▲' : '展开 ▼' }}
-                    </button>
-                </div>
-                    
-                <!-- 文章列表（使用 v-show 控制显示） -->
-                <div class="collection-list" v-show="isExpanded">
-                    <div v-for="(article, index) in collections" :key="article.articleId" class="collection-bar" @click="getCollectionArticle(article.articleId)">
-                        <div>{{ index + 1 }}. {{ article.title }}</div>
-                        <div class="collection-date">{{ formatDate(article.postDate) }}</div>
+    <div class="container">
+        <div class="post">
+            <div name="article">
+                <h1>{{article.title}}</h1>
+                <div class="post-meta">{{ article.postDate }}</div>
+                <div v-if="collections.length > 0" class="collection-container">
+                    <div  class="collection-title">
+                        合集：{{ collections[0]?.collection }}
+                        <!-- 切换展开/收缩按钮 -->
+                        <button @click="toggleExpand" class="toggle-btn">
+                            {{ isExpanded ? '收起 ▲' : '展开 ▼' }}
+                        </button>
+                    </div>
+                        
+                    <!-- 文章列表（使用 v-show 控制显示） -->
+                    <div class="collection-list" v-show="isExpanded">
+                        <div v-for="(article, index) in collections" :key="article.articleId" class="collection-bar" @click="getCollectionArticle(article.articleId)">
+                            <div>{{ index + 1 }}. {{ article.title }}</div>
+                            <div class="collection-date">{{ formatDate(article.postDate) }}</div>
+                        </div>
                     </div>
                 </div>
+                <div v-html="article.content" class="post-content"></div>       
             </div>
-            <div v-html="article.content" class="post-content"></div>       
+            <div class="post-foot">
+                <div>最后修改：{{ article.updateDate }}</div>
+                <button @click="like" class="like-buttion">👍 点赞</button>
+            </div>
+            
         </div>
-        <div class="post-foot">
-            <div>最后修改：{{ article.updateDate }}</div>
-            <button @click="like" class="like-buttion">👍 点赞</button>
+        <div class="post">
+            <Comement/>
         </div>
-        <Comement style="margin-top: 20px;"/>
     </div>
+    
     <Footer/>
 </template>
 
 
 <script setup>
-    import { ref, onMounted } from 'vue';
+    import { ref, onMounted, nextTick } from 'vue';
     import { useRoute, useRouter } from 'vue-router'; // 确保导入 useRoute
     import Header from '@/components/Header.vue'
     import Footer from '@/components/Footer.vue'
@@ -119,6 +125,22 @@
         await loadArticle(); 
         await getCollections();
         updateTitle();
+
+        nextTick(() => {
+            if (window.Prism) {
+                window.Prism.highlightAll()
+            }
+        });
+
+        const script = document.createElement('script');
+        script.src = "http://localhost:8081/assets/prism.js";
+        script.async = true;
+        document.body.appendChild(script);
+
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = 'http://localhost:8081/assets/prism.css'; // 或者你自己的路径
+        document.head.appendChild(link);
     });
 
     // 设置页面标题
@@ -130,11 +152,23 @@
 
 
 <style scoped>
+.container {
+    background:#f5f5f5; 
+    padding: 20px;
+    margin: -8px;
+}
+
 .post {
     position: relative;
     transform: translateX(-50%);
     left: 50%;
-    width: 70vw;
+    width: 60vw;
+    font-family: 'Microsoft Yahei';
+    font-size: 18px;
+    line-height: 1.8em;
+    padding: 0% 5%;
+    border: 2px solid #ccc;
+    margin-bottom: 10px;
 }
 
 .like-buttion {
@@ -143,6 +177,7 @@
     background-color: color;
     border: 1px solid red;
     margin-top: 10px;
+    margin-bottom: 10px;
 }
 
 .like-buttion:hover {
@@ -168,13 +203,15 @@ h1 {
 
 .collection-container {
     width: 100%;
-    max-width: 800px;
+    max-width: 600px;
     border: 1px solid #ccc;
     border-radius: 8px;
     padding: 8px;
     margin: 15px;
     background-color: #f9f9f9;
-    transform: translateX(25%);
+    transform: translateX(-50%);
+    left: 50%;
+    position: relative;
 }
 
 .collection-title {
@@ -212,6 +249,8 @@ h1 {
     justify-content: space-between;
     align-items: center;
     transition: background-color 0.2s;
+    font-size: 14px;
+    line-height: 1.6em;
 }
 
 .collection-bar:hover {
