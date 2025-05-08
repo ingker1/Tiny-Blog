@@ -136,10 +136,16 @@ public class ArchiveService {
     }
 
     @Transactional
-    public List<ArticleCollection> getCollection(Integer articleId) {
+    public List<ArticleCollection> getCollectionByArticle(Integer articleId) {
         logger.info("查询文章集合：{}", articleId);
         validateId(articleId, "文章ID");
         return archiveMapper.getCollection(articleId);
+    }
+
+    @Transactional
+    public List<ArchiveListDTO> getCollections() {
+        logger.info("查询所有文章集合");
+        return archiveMapper.getAllCollection();
     }
 
     @Transactional

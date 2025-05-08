@@ -136,18 +136,27 @@ public interface ArchiveMapper {
 
 
     @Select("""
-            select at.article_id, at.article_title, at.post_time, ar.archive_name
-            from article at
-            inner join archive_relationship arr on at.article_id = arr.article_id
-            inner join archive ar on ar.archive_id = arr.archive_id
-            where ar.taxonomy = 'collection'
-            and ar.archive_name in (
-                select ar.archive_name
-                from archive_relationship arr
-                inner join archive ar on arr.archive_id = ar.archive_id
-                where arr.article_id = #{articleId} and ar.taxonomy = 'collection'
+            SELECT at.article_id, at.article_title, at.post_time, ar.archive_name
+            FROM article at
+            INNER JOIN archive_relationship arr ON at.article_id = arr.article_id
+            INNER JOIN archive ar ON ar.archive_id = arr.archive_id
+            WHERE ar.taxonomy = 'collection'
+            AND ar.archive_name IN (
+                SELECT ar.archive_name
+                FROM archive_relationship arr
+                INNER JOIN archive ar ON arr.archive_id = ar.archive_id
+                WHERE arr.article_id = #{articleId} AND ar.taxonomy = 'collection'
             )
             ORDER BY at.post_time
             """)
     List<ArticleCollection> getCollection(Integer articleId);
+
+    @Select("""
+            SELECT ar.*, count(*)
+            FROM archive ar
+            LEFT JOIN archive_relationship arr ON ar.archive_id = arr.archive_id
+            WHERE ar.taxonomy = 'collection'
+            GROUP BY ar.archive_id
+            """)
+    List<ArchiveListDTO> getAllCollection();
 }

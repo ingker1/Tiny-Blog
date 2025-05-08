@@ -15,4 +15,7 @@ public interface ArchiveRelationshipMapper {
 
     @Delete("DELETE FROM archive_relationship arr WHERE arr.article_id = #{id}")
     void deleteByArticleId(Integer id);
+
+    @Delete("DELETE FROM archive_relationship arr WHERE arr.article_id = #{articleId} AND arr.archive_id = #{collectionId}")
+    void deleteOne(Integer articleId, Integer collectionId);
 }

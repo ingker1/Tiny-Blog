@@ -137,7 +137,20 @@ public class ArchiveController {
     @GetMapping("/collections")
     public ResponseEntity<List<ArticleCollection>> getCollection(@RequestParam("articleId") Integer id) {
         try {
-            List<ArticleCollection> bean = archiveService.getCollection(id);
+            List<ArticleCollection> bean = archiveService.getCollectionByArticle(id);
+            return ResponseEntity.ok(bean); // 返回 200 和查询结果
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(null); // 返回 500 错误
+        }
+    }
+
+    @GetMapping("admin/collections")
+//    @GetMapping("collection")
+    public ResponseEntity<List<ArchiveListDTO>> getCollections() {
+        try {
+            List<ArchiveListDTO> bean = archiveService.getCollections();
             return ResponseEntity.ok(bean); // 返回 200 和查询结果
         } catch (Exception e) {
             System.out.println(e.getMessage());
