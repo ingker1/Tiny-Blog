@@ -33,6 +33,7 @@
         <div class="post">
             <Comement/>
         </div>
+        <Editor v-show="false" ref="editorRef"/>
     </div>
     
     <Footer/>
@@ -45,6 +46,7 @@
     import Header from '@/components/Header.vue'
     import Footer from '@/components/Footer.vue'
     import Comement from '@/components/Comment.vue'
+    import Editor from '@/components/Editor.vue';
     import axios from 'axios'; // 你可以用 fetch 或其他库
 
     const article = ref({});     // 文章内容
@@ -53,6 +55,7 @@
     const collections = ref({});
     const router = useRouter(); 	// 路由管理器
     const isExpanded = ref(true);
+    const editorRef = ref(null);        // 用于获取 Editor 的实例
 
     const toggleExpand = () => {
         isExpanded.value = !isExpanded.value;
@@ -80,10 +83,11 @@
             const response = await axios.get(`http://localhost:8080/articles/${id}`); // 发起请求
             const data = response.data;
 
+            editorRef.value.setValue(response.data.content);
             // 处理返回的数据并赋值
             article.value = {
                 title: data.title, // 显示文章标题
-                content: data.content, // 显示文章内容（包含 HTML）
+                content: editorRef.value.getHTML(), // 显示文章内容（包含 HTML）
                 postDate: formatDate(data.postDate),
                 updateDate: formatDate(data.updateDate),
                 views: data.views,
