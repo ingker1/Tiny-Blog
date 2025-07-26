@@ -89,7 +89,7 @@
             const response = await axios.put('http://localhost:8080/admin/articles', {
                 articleId: id,
                 title: articletitle.value,
-                content: editorRef.value.getHTML(),
+                content: editorRef.value.getValue(),
                 postDate: new Date(time.value),
                 updateDate: new Date(),
                 status: status.value,
@@ -293,5 +293,6 @@ button {
     display: flex;
     flex-direction: row;
     align-items: center;
+    margin-bottom: 10px;
 }
 </style>
