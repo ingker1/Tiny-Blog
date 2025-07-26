@@ -1,6 +1,6 @@
 <template>
   <!-- 指定一个容器 -->
-  <div id="vditor" style="margin-top: 10px;"></div>
+  <div id="vditor"></div>
 </template>
 
 <script setup>
@@ -15,9 +15,9 @@ const isReady = ref(false); // 标志位，表示 Vditor 是否已初始化
 
 onMounted(() => {
   editor.value = new Vditor('vditor',{
-        height: '80vh',
+        height: '77vh',
         width: '60vw',
-        mode: 'wysiwyg', //编辑模式设置为即时渲染
+        mode: 'ir', //编辑模式设置为即时渲染
         cdn: 'http://localhost:8081/vditor', // 设置为本地CDN
         icon: 'material',
         after() {
