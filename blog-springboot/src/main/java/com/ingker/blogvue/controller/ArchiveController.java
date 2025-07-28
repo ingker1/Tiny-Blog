@@ -6,6 +6,7 @@ import com.ingker.blogvue.dto.ArticleCollection;
 import com.ingker.blogvue.entity.Archive;
 import com.ingker.blogvue.service.ArchiveService;
 import com.ingker.blogvue.util.Page;
+import com.ingker.blogvue.vto.ArticleIdsCollectionIdVTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -154,6 +155,19 @@ public class ArchiveController {
             return ResponseEntity.ok(bean); // 返回 200 和查询结果
         } catch (Exception e) {
             System.out.println(e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(null); // 返回 500 错误
+        }
+    }
+
+    @PutMapping("/admin/collections")
+    public ResponseEntity<Object> setArticlesCollection(
+            @RequestBody ArticleIdsCollectionIdVTO articleIdsCollectionIdVTO) {
+        try {
+            archiveService.setArticlesCollection(articleIdsCollectionIdVTO.getArticleIds(),
+                                                 articleIdsCollectionIdVTO.getCollectionId());
+            return ResponseEntity.ok(null);
+        } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(null); // 返回 500 错误
         }

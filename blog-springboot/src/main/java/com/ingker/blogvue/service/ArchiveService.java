@@ -164,6 +164,14 @@ public class ArchiveService {
         return archiveMapper.getAllByTaxonomyWithCount("post_tag", sortFiled, orderFiled);
     }
 
+    @Transactional
+    public void setArticlesCollection(List<Integer> articleIds, Integer collectionId) {
+        logger.info("批量设置文章所属合集");
+        for (Integer e : articleIds) {
+            archiveRelationshipMapper.add(collectionId, e);
+        }
+    }
+
     private void validateArchive(Archive archive) {
         if (archive == null) {
             throw new IllegalArgumentException("归档信息不能为空");
