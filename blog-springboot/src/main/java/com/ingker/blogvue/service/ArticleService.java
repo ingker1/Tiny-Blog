@@ -68,9 +68,10 @@ public class ArticleService {
         List<Integer> articleIds = articles.stream().map(Article::getArticleId).toList();
         Map<Integer, Archive> categoryMap = getArticleCategoryMap(articleIds);
         Map<Integer, List<Archive>> tagMap = getArticleTagMap(articleIds);
+        Map<Integer, Archive> collectionMap = getArticleCollection(articleIds);
 
         // 组装 DTO
-        List<ArticleListDTO> articleListDTOs = buildArticleListDTOs(articles, categoryMap, tagMap);
+        List<ArticleListDTO> articleListDTOs = buildArticleListDTOs(articles, categoryMap, tagMap, collectionMap);
 
         logger.info("分页查询文章，分类：{}、标签：{}、发布状态：{}、搜索关键词：{}、页数：{}、每页个数：{}、总记录数：{}、排序：{}、顺序：{}",
                 category, tag, status, searchKeyword, page, size, total, sort, order);
@@ -121,17 +122,23 @@ public class ArticleService {
                         Collectors.mapping(ArticleArchive::getArchive, Collectors.toList())));
     }
 
+    private Map<Integer, Archive> getArticleCollection(List<Integer> articleIds) {
+        return archiveMapper.getByArticleIds(articleIds, "collection").stream()
+                .collect(Collectors.toMap(ArticleArchive::getArticleId, ArticleArchive::getArchive));
+    }
+
     /**
      * 组装 ArticleListDTO
      */
     private List<ArticleListDTO> buildArticleListDTOs(List<Article> articles, Map<Integer, Archive> categoryMap,
-                                                      Map<Integer, List<Archive>> tagMap) {
+                                                      Map<Integer, List<Archive>> tagMap, Map<Integer, Archive> collectionMap) {
         return articles.stream()
                 .map(article -> {
                     ArticleListDTO dto = new ArticleListDTO();
                     dto.setArticle(article);
                     dto.setCategory(categoryMap.getOrDefault(article.getArticleId(), null));
                     dto.setTags(tagMap.getOrDefault(article.getArticleId(), Collections.emptyList()));
+                    dto.setCollection(collectionMap.getOrDefault(article.getArticleId(), null));
                     return dto;
                 })
                 .toList();

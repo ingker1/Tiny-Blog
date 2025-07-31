@@ -44,6 +44,7 @@ public class ArticleListDTO {
 
     private Archive category;
     private List<Archive> tags;
+    private Archive collection;
 
     public void setArticle(Article article) {
         this.articleId = article.getArticleId();
