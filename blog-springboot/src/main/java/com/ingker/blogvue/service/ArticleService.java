@@ -155,6 +155,8 @@ public class ArticleService {
         articleDTO.setCategory(category.isEmpty() ? null : category.get(0));
         articleDTO.setTags(new ArrayList<>());
         articleDTO.getTags().addAll(archiveMapper.getByArticleId(id, "post_tag"));
+        List<Archive> collection = archiveMapper.getByArticleId(id, "collection");
+        articleDTO.setCollection(collection.isEmpty() ? null : collection.get(0));
 
         logger.info("查询文章，ID: {}", id);
         return articleDTO;
@@ -167,7 +169,7 @@ public class ArticleService {
 
         try {
             articleMapper.add(articleDTO.getArticle());
-            updateArticleCategoriesAndTags(articleDTO);
+            updateArticleArchive(articleDTO);
             logger.info("文章添加成功: ID={}", articleDTO.getArticle().getArticleId());
         } catch (Exception e) {
             logger.error("文章添加失败: 标题={}, 错误信息={}", articleDTO.getArticle().getArticleTitle(), e.getMessage(), e);
@@ -200,7 +202,7 @@ public class ArticleService {
         try {
             articleMapper.update(articleDTO.getArticle());
             archiveRelationshipMapper.deleteByArticleId(articleDTO.getArticleId());
-            updateArticleCategoriesAndTags(articleDTO);
+            updateArticleArchive(articleDTO);
             logger.info("文章更新成功: ID={}", articleDTO.getArticle().getArticleId());
         } catch (Exception e) {
             logger.error("文章更新失败: ID={}, 错误信息={}", articleDTO.getArticle().getArticleId(), e.getMessage(), e);
@@ -288,15 +290,20 @@ public class ArticleService {
     }
 
     /**
-     * 更新文章的分类和标签
+     * 更新文章的存档方法
      */
-    private void updateArticleCategoriesAndTags(ArticleDTO articleDTO) {
+    private void updateArticleArchive(ArticleDTO articleDTO) {
         Integer articleId = articleDTO.getArticle().getArticleId();
         archiveRelationshipMapper.deleteByArticleId(articleId);
 
         if (articleDTO.getCategory() != null) {
             validatePositiveInteger(articleDTO.getCategory().getArchiveId(), "分类ID");
             archiveRelationshipMapper.add(articleDTO.getCategory().getArchiveId(), articleId);
+        }
+
+        if (articleDTO.getCollection() != null) {
+            validatePositiveInteger(articleDTO.getCollection().getArchiveId(), "合集ID");
+            archiveRelationshipMapper.add(articleDTO.getCollection().getArchiveId(), articleId);
         }
 
         for (Archive tag : articleDTO.getTags()) {

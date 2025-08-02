@@ -15,7 +15,7 @@ import java.util.List;
 @Getter
 @Setter
 @ToString
-@JsonPropertyOrder({"articleId", "title", "summary", "postDate", "updateDate", "status", "likes", "views", "comments", "category", "tags"})
+@JsonPropertyOrder({"articleId", "title", "summary", "postDate", "updateDate", "status", "likes", "views", "comments", "category", "tags", "collection"})
 public class ArticleDTO {
     private Integer articleId;
 
@@ -45,6 +45,7 @@ public class ArticleDTO {
 
     private Archive category;
     private List<Archive> tags;
+    private Archive collection;
 
     public void setArticle(Article article) {
         this.articleId = article.getArticleId();
