@@ -122,6 +122,15 @@
                         </td>
                         <td colspan="3" style="vertical-align: top;">
                             设置文章合集
+                            <select v-model="collection">
+                                <option 
+                                    v-for="item in articleCollections" 
+                                    :key="item.archiveId" 
+                                    :value="item"
+                                >
+                                    {{ item.name }}
+                                </option>
+                            </select>
                         </td>
                         <td></td>
                     </tr>
@@ -137,6 +146,7 @@
                         </td>
                         <td>{{ article.title }}
                             <p>摘要：{{ article.summary.substring(0, 100) }}</p>
+                            文章合集：{{ article.collection ? article.collection.name : '无' }}
                             <div class="quickbutton">
                                 <button @click="editArticle(article)">编辑</button>
                                 <button @click="quickEdit(index)">快速编辑</button>
@@ -171,6 +181,17 @@
                             v-model:category="article.category"
                             v-model:tags="article.tags"
                             />
+                            <div>添加到文章合集
+                                <select v-model="collection">
+                                    <option 
+                                        v-for="item in articleCollections" 
+                                        :key="item.archiveId" 
+                                        :value="item"
+                                    >
+                                        {{ item.name }}
+                                    </option>
+                                </select>
+                            </div>
                             <button @click="updateButton(article)">修改</button>
                             <button @click="cancelQuickEdit()">取消</button>
                         </td>
@@ -307,6 +328,7 @@
 
     const quickEdit = (index) => {
         editingArticleIndex.value = index;
+        getCollections();
     }
 
     // 获取文章数据的函数
@@ -469,7 +491,8 @@
             views: article.views,
             comments: article.comments,
             category: article.category,
-            tags: article.tags
+            tags: article.tags,
+            collection: collection.value
         })
         .catch (error => {
             console.error("修改文章错误", error);
@@ -502,7 +525,8 @@
                     views: article.views,
                     comments: article.comments,
                     category: article.category,
-                    tags: article.tags
+                    tags: article.tags,
+                    collection: article.collection
                 })
                 .catch(error => {
                     console.error(error);
@@ -575,6 +599,21 @@
 
     function batchEdit() {
         batchShow.value = true;
+        getCollections();
+    }
+
+    const articleCollections = ref([]);
+    const collection = ref(null); 
+
+    function getCollections() {
+        axios.get(`http://localhost:8080/admin/collections`)
+        .then(response => {
+            articleCollections.value = response.data;
+            console.log(articleCollections);
+        })
+        .catch(error => {
+            console.error(error);
+        });
     }
 
     // 如果 articles 列表变动，重置全选状态
@@ -646,7 +685,8 @@
                     views: article.views,
                     comments: article.comments,
                     category: categoryItem,
-                    tags: article.tags
+                    tags: article.tags,
+                    collection: collection.value
                 })
                 .catch (error => {
                     console.error("修改文章错误", error);
