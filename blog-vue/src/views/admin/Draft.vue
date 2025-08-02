@@ -174,7 +174,8 @@
             likes: article.likes,
             views: article.views,
             category: article.category,
-            tags: article.tags
+            tags: article.tags,
+            collection: article.collection
         })
         .then (()=> {
             alert('已移至废纸篓');

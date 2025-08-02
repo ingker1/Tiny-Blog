@@ -179,7 +179,8 @@
                 views: article.views,
                 comments: article.comments,
                 category: article.category,
-                tags: article.tags
+                tags: article.tags,
+                collection: article.collection
             })
             .catch(error => {
                 console.error(error);

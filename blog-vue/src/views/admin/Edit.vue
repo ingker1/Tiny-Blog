@@ -97,7 +97,8 @@
                 views: views.value,
                 comments: comments.value,
                 category: category.value,
-                tags: tags.value
+                tags: tags.value,
+                collection: null
             });
 
             if (response.status === 200 && response.data) {
